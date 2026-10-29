@@ -1,22 +1,32 @@
 package com.norte.norte_api.service;
 
 import java.util.Locale;
+import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import com.norte.norte_api.dto.AuthResponseDTO;
 import com.norte.norte_api.dto.LoginRequestDTO;
+import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
+import com.norte.norte_api.exception.DuplicateEmailException;
+import com.norte.norte_api.exception.DuplicateUsernameException;
 import com.norte.norte_api.models.UserModel;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.JwtTokenProvider;
 
+import jakarta.transaction.Transactional;
+
 /**
  * Serviço responsável pelo fluxo de autenticação.
  *
- * <p>Erros de credenciais — e-mail não encontrado ou senha incorreta — são tratados
- * de forma idêntica: ambos lançam {@link BadCredentialsException} com a mesma mensagem
+ * <p>
+ * Erros de credenciais — e-mail não encontrado ou senha incorreta — são
+ * tratados
+ * de forma idêntica: ambos lançam {@link BadCredentialsException} com a mesma
+ * mensagem
  * genérica, evitando user enumeration (não revela se o e-mail existe).
  */
 @Service
@@ -29,11 +39,39 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(UserRepository userRepository,
-                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    @Transactional
+    public UserResponseDTO register(UserRequestDTO requestDTO) {
+        String email = normalizeEmail(requestDTO.email());
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new DuplicateEmailException();
+        }
+
+        UserModel user = new UserModel();
+        user.setName(requestDTO.name());
+        user.setUsername(requestDTO.username());
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(requestDTO.password()));
+
+        try {
+            UserModel savedUser = userRepository.save(user);
+            return UserResponseDTO.from(savedUser);
+        } catch (DataIntegrityViolationException ex) {
+            if (isConstraintViolation(ex, "uk_users_email")) {
+                throw new DuplicateEmailException();
+            }
+            if (isConstraintViolation(ex, "users_username_key") || isConstraintViolation(ex, "username")) {
+                throw new DuplicateUsernameException();
+            }
+            throw ex;
+        }
     }
 
     /**
@@ -41,7 +79,8 @@ public class AuthService {
      *
      * @param loginRequest credenciais de entrada
      * @return resposta com token Bearer e dados públicos do usuário
-     * @throws BadCredentialsException se o e-mail não for encontrado ou a senha não conferir
+     * @throws BadCredentialsException se o e-mail não for encontrado ou a senha não
+     *                                 conferir
      */
     public AuthResponseDTO login(LoginRequestDTO loginRequest) {
         String email = normalizeEmail(loginRequest.email());
@@ -61,5 +100,12 @@ public class AuthService {
 
     private static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isConstraintViolation(DataIntegrityViolationException ex, String constraintHint) {
+        String message = Optional.ofNullable(ex.getMostSpecificCause())
+                .map(Throwable::getMessage)
+                .orElseGet(ex::getMessage);
+        return message != null && message.toLowerCase(Locale.ROOT).contains(constraintHint.toLowerCase(Locale.ROOT));
     }
 }

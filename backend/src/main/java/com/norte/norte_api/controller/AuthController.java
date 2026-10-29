@@ -16,7 +16,6 @@ import com.norte.norte_api.dto.UserResponseDTO;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.UserPrincipal;
 import com.norte.norte_api.service.AuthService;
-import com.norte.norte_api.service.UserService;
 
 import jakarta.validation.Valid;
 
@@ -24,23 +23,21 @@ import jakarta.validation.Valid;
  * Endpoints de autenticação — cadastro, login e perfil do usuário autenticado.
  *
  * <ul>
- *   <li>{@code POST /auth/register} — público, cria um novo usuário</li>
- *   <li>{@code POST /auth/login}    — público, retorna token Bearer + dados do usuário</li>
- *   <li>{@code GET  /auth/me}       — protegido, retorna os dados do usuário autenticado</li>
+ * <li>{@code POST /auth/register} — público, cria um novo usuário</li>
+ * <li>{@code POST /auth/login} — público, retorna token Bearer + dados do
+ * usuário</li>
+ * <li>{@code GET  /auth/me} — protegido, retorna os dados do usuário
+ * autenticado</li>
  * </ul>
  */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final UserService userService;
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    public AuthController(UserService userService,
-                          AuthService authService,
-                          UserRepository userRepository) {
-        this.userService = userService;
+    public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
     }
@@ -48,7 +45,7 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponseDTO register(@Valid @RequestBody UserRequestDTO requestDTO) {
-        return userService.save(requestDTO);
+        return authService.register(requestDTO);
     }
 
     @PostMapping("/login")
@@ -59,7 +56,8 @@ public class AuthController {
     /**
      * Retorna os dados públicos do usuário autenticado.
      *
-     * <p>O identificador é extraído do {@link UserPrincipal} presente no contexto de
+     * <p>
+     * O identificador é extraído do {@link UserPrincipal} presente no contexto de
      * segurança — nunca de um parâmetro fornecido pelo cliente.
      */
     @GetMapping("/me")
