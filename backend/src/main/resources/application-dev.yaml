@@ -1,0 +1,10 @@
+# Perfil de desenvolvimento.
+# Ative com: SPRING_PROFILES_ACTIVE=dev  ou  ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    persist-authorization: true

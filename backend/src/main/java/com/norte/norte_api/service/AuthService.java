@@ -46,8 +46,15 @@ public class AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /**
+     * Cadastra um novo usuário e já emite um token JWT, permitindo que o cliente
+     * siga autenticado sem precisar chamar {@code /auth/login} em seguida.
+     *
+     * @param requestDTO dados de cadastro
+     * @return resposta com token Bearer e dados públicos do usuário criado
+     */
     @Transactional
-    public UserResponseDTO register(UserRequestDTO requestDTO) {
+    public AuthResponseDTO register(UserRequestDTO requestDTO) {
         String email = normalizeEmail(requestDTO.email());
 
         if (userRepository.existsByEmailIgnoreCase(email)) {
@@ -61,8 +68,11 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(requestDTO.password()));
 
         try {
-            UserModel savedUser = userRepository.save(user);
-            return UserResponseDTO.from(savedUser);
+            // saveAndFlush força o INSERT aqui, para que violações de unicidade
+            // caiam neste catch antes de emitirmos o token.
+            UserModel savedUser = userRepository.saveAndFlush(user);
+            String token = jwtTokenProvider.generateToken(savedUser.getEmail());
+            return AuthResponseDTO.of(token, UserResponseDTO.from(savedUser));
         } catch (DataIntegrityViolationException ex) {
             if (isConstraintViolation(ex, "uk_users_email")) {
                 throw new DuplicateEmailException();

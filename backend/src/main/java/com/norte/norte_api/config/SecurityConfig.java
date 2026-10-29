@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,16 +44,27 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins}")
     private String allowedOriginsRaw;
 
+    /** Rotas do springdoc liberadas apenas no perfil {@code dev}. */
+    private static final String[] SWAGGER_PATHS = {
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**"
+    };
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
+    private final Environment environment;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           JwtAuthenticationEntryPoint authenticationEntryPoint,
-                          JwtAccessDeniedHandler accessDeniedHandler) {
+                          JwtAccessDeniedHandler accessDeniedHandler,
+                          Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
+        this.environment = environment;
     }
 
     @Bean
@@ -78,10 +90,18 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
 
                 // ── Autorização ───────────────────────────────────────────────────────────
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
+
+                    // Swagger público somente em dev. Fora dele, além do springdoc
+                    // estar desligado, as rotas caem em authenticated().
+                    if (environment.matchesProfiles("dev")) {
+                        auth.requestMatchers(SWAGGER_PATHS).permitAll();
+                    }
+
+                    auth.anyRequest().authenticated();
+                })
 
                 // ── Filtro JWT ────────────────────────────────────────────────────────────
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

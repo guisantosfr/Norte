@@ -23,7 +23,8 @@ import jakarta.validation.Valid;
  * Endpoints de autenticação — cadastro, login e perfil do usuário autenticado.
  *
  * <ul>
- * <li>{@code POST /auth/register} — público, cria um novo usuário</li>
+ * <li>{@code POST /auth/register} — público, cria um novo usuário e retorna
+ * token Bearer + dados do usuário</li>
  * <li>{@code POST /auth/login} — público, retorna token Bearer + dados do
  * usuário</li>
  * <li>{@code GET  /auth/me} — protegido, retorna os dados do usuário
@@ -44,7 +45,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDTO register(@Valid @RequestBody UserRequestDTO requestDTO) {
+    public AuthResponseDTO register(@Valid @RequestBody UserRequestDTO requestDTO) {
         return authService.register(requestDTO);
     }
 

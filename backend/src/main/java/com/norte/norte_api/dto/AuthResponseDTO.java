@@ -1,7 +1,7 @@
 package com.norte.norte_api.dto;
 
 /**
- * DTO de saída para o endpoint de login bem-sucedido.
+ * DTO de saída para login e cadastro bem-sucedidos.
  * Carrega o token de acesso e os dados públicos do usuário autenticado.
  *
  * @param tokenType sempre {@code "Bearer"}, incluído para facilitar o uso pelo cliente

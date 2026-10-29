@@ -18,3 +18,11 @@ jwt:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+# Documentação OpenAPI/Swagger desligada por padrão.
+# Habilitada apenas no perfil "dev" (ver application-dev.yaml).
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
