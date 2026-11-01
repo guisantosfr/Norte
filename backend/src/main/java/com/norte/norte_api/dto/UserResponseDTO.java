@@ -8,7 +8,6 @@ import com.norte.norte_api.models.UserModel;
 public record UserResponseDTO(
         UUID id,
         String name,
-        String username,
         String email,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -17,7 +16,6 @@ public record UserResponseDTO(
         return new UserResponseDTO(
                 user.getId(),
                 user.getName(),
-                user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()

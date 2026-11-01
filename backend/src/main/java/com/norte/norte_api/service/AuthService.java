@@ -12,7 +12,6 @@ import com.norte.norte_api.dto.LoginRequestDTO;
 import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
 import com.norte.norte_api.exception.DuplicateEmailException;
-import com.norte.norte_api.exception.DuplicateUsernameException;
 import com.norte.norte_api.models.UserModel;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.JwtTokenProvider;
@@ -63,7 +62,6 @@ public class AuthService {
 
         UserModel user = new UserModel();
         user.setName(requestDTO.name());
-        user.setUsername(requestDTO.username());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(requestDTO.password()));
 
@@ -76,9 +74,6 @@ public class AuthService {
         } catch (DataIntegrityViolationException ex) {
             if (isConstraintViolation(ex, "uk_users_email")) {
                 throw new DuplicateEmailException();
-            }
-            if (isConstraintViolation(ex, "users_username_key") || isConstraintViolation(ex, "username")) {
-                throw new DuplicateUsernameException();
             }
             throw ex;
         }

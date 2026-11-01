@@ -16,6 +16,4 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
 
     @Query("SELECT COUNT(u) > 0 FROM UserModel u WHERE LOWER(u.email) = LOWER(:email)")
     boolean existsByEmailIgnoreCase(@Param("email") String email);
-
-    boolean existsByUsername(String username);
 }

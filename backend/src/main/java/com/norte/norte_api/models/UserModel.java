@@ -25,9 +25,6 @@ public class UserModel {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 50)
-    private String username;
-
     @Column(nullable = false, length = 255)
     private String email;
 
@@ -63,10 +60,6 @@ public class UserModel {
         return name;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
     public String getEmail() {
         return email;
     }
@@ -85,10 +78,6 @@ public class UserModel {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public void setEmail(String email) {
