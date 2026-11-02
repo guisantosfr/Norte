@@ -2,6 +2,7 @@ package com.norte.norte_api.security;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,16 +19,22 @@ import com.norte.norte_api.models.UserModel;
  */
 public final class UserPrincipal implements UserDetails {
 
+    private final UUID id;
     private final String email;
     private final String password;
 
-    private UserPrincipal(String email, String password) {
+    private UserPrincipal(UUID id, String email, String password) {
+        this.id = id;
         this.email = email;
         this.password = password;
     }
 
     public static UserPrincipal from(UserModel user) {
-        return new UserPrincipal(user.getEmail(), user.getPassword());
+        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword());
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     @Override

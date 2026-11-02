@@ -12,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,6 +77,31 @@ public class GlobalExceptionHandler {
                         "O corpo da requisição está ausente ou mal formado."));
     }
 
+    /**
+     * Parâmetro de rota ou query com tipo inválido (ex.: UUID, data ou enum mal formado).
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiErrorResponse.badRequest(request.getRequestURI(),
+                        "Parâmetro inválido: '" + ex.getName() + "'."));
+    }
+
+    /**
+     * Violação de regra de negócio ou combinação inválida de parâmetros.
+     */
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiErrorResponse> handleBusinessRule(
+            BusinessRuleException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiErrorResponse.badRequest(request.getRequestURI(), ex.getMessage()));
+    }
+
     // ─── 401 Unauthorized ───────────────────────────────────────────────────────
 
     /**
@@ -91,6 +117,18 @@ public class GlobalExceptionHandler {
     }
 
     // ─── 404 Not Found ──────────────────────────────────────────────────────────
+
+    /**
+     * Recurso de domínio não encontrado (ou pertencente a outro usuário).
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.notFound(request.getRequestURI(), ex.getMessage()));
+    }
 
     /**
      * Rota requisitada não existe no servidor.
