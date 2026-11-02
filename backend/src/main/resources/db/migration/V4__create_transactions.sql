@@ -38,7 +38,7 @@ CREATE TABLE transactions (
         CHECK (type IN ('INCOME', 'EXPENSE')),
 
     CONSTRAINT chk_transactions_status
-        CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELLED')),
+        CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELED')),
 
     CONSTRAINT chk_transactions_amount
         CHECK (amount > 0),
