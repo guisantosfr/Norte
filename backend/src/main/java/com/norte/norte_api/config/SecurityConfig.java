@@ -27,14 +27,20 @@ import com.norte.norte_api.security.JwtAuthenticationFilter;
 /**
  * Configuração central do Spring Security.
  *
- * <p>Estratégia de autenticação: Bearer token JWT — sem cookies de sessão, sem CSRF.
+ * <p>
+ * Estratégia de autenticação: Bearer token JWT — sem cookies de sessão, sem
+ * CSRF.
  *
  * <ul>
- *   <li>Sessão {@code STATELESS} — nenhum {@link jakarta.servlet.http.HttpSession} é criado.</li>
- *   <li>CSRF desabilitado — tokens Bearer em header {@code Authorization} não são vulneráveis
- *       a CSRF (o ataque explora cookies de sessão automáticos; aqui não há).</li>
- *   <li>CORS configurável via variável de ambiente {@code CORS_ALLOWED_ORIGINS}.</li>
- *   <li>401 e 403 retornam JSON estruturado, sem redirecionamento para {@code /login}.</li>
+ * <li>Sessão {@code STATELESS} — nenhum
+ * {@link jakarta.servlet.http.HttpSession} é criado.</li>
+ * <li>CSRF desabilitado — tokens Bearer em header {@code Authorization} não são
+ * vulneráveis
+ * a CSRF (o ataque explora cookies de sessão automáticos; aqui não há).</li>
+ * <li>CORS configurável via variável de ambiente
+ * {@code CORS_ALLOWED_ORIGINS}.</li>
+ * <li>401 e 403 retornam JSON estruturado, sem redirecionamento para
+ * {@code /login}.</li>
  * </ul>
  */
 @Configuration
@@ -58,9 +64,9 @@ public class SecurityConfig {
     private final Environment environment;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          JwtAuthenticationEntryPoint authenticationEntryPoint,
-                          JwtAccessDeniedHandler accessDeniedHandler,
-                          Environment environment) {
+            JwtAuthenticationEntryPoint authenticationEntryPoint,
+            JwtAccessDeniedHandler accessDeniedHandler,
+            Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
@@ -79,8 +85,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // ── Sessão ───────────────────────────────────────────────────────────────
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // ── 401 / 403 ────────────────────────────────────────────────────────────
                 // Delegados a beans dedicados que escrevem o mesmo ApiErrorResponse
@@ -92,7 +97,7 @@ public class SecurityConfig {
                 // ── Autorização ───────────────────────────────────────────────────────────
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
+                            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
 
                     // Swagger público somente em dev. Fora dele, além do springdoc
                     // estar desligado, as rotas caem em authenticated().
@@ -111,18 +116,21 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> allowedOrigins = Arrays.asList(allowedOriginsRaw.split(","));
+        List<String> allowedOrigins = Arrays.stream(
+                allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
 
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(false); // Bearer token — não usa cookies
         config.setMaxAge(3600L);
 

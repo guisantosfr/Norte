@@ -17,7 +17,7 @@ jwt:
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
 # Documentação OpenAPI/Swagger desligada por padrão.
 # Habilitada apenas no perfil "dev" (ver application-dev.yaml).

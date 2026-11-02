@@ -28,10 +28,12 @@ import com.norte.norte_api.models.TransactionType;
 import com.norte.norte_api.security.UserPrincipal;
 import com.norte.norte_api.service.TransactionService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/transactions")
+@SecurityRequirement(name = "bearerAuth")
 public class TransactionController {
 
     private final TransactionService transactionService;

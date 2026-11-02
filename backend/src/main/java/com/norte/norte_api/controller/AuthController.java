@@ -17,6 +17,7 @@ import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.UserPrincipal;
 import com.norte.norte_api.service.AuthService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 /**
@@ -62,6 +63,7 @@ public class AuthController {
      * segurança — nunca de um parâmetro fornecido pelo cliente.
      */
     @GetMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     public UserResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
         return userRepository.findByEmailIgnoreCase(principal.getUsername())
                 .map(UserResponseDTO::from)

@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Profile;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
 /**
@@ -34,7 +33,6 @@ public class OpenApiConfig {
                         .addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
-                                .bearerFormat("JWT")))
-                .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME));
+                                .bearerFormat("JWT")));
     }
 }
