@@ -74,10 +74,11 @@ public class TransactionController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) TransactionType type,
             @RequestParam(required = false) TransactionStatus status,
+            @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return transactionService.findAll(principal.getId(), type, status, startDate, endDate);
+        return transactionService.findAll(principal.getId(), type, status, categoryId, startDate, endDate);
     }
 
     @GetMapping("/{id}")

@@ -3,6 +3,7 @@ package com.norte.norte_api.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.norte.norte_api.models.TransactionStatus;
 
@@ -31,6 +32,11 @@ public record TypedTransactionRequestDTO(
         @Digits(integer = 17, fraction = 2, message = "O valor realizado deve ter no máximo 17 dígitos inteiros e 2 casas decimais")
         BigDecimal realizedAmount,
 
-        LocalDateTime realizedAt
+        LocalDateTime realizedAt,
+
+        UUID categoryId,
+
+        @Size(max = 100, message = "O nome da categoria deve ter no máximo 100 caracteres")
+        String categoryName
 ) {
 }

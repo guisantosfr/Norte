@@ -18,6 +18,7 @@ import com.norte.norte_api.dto.TransactionResponseDTO;
 import com.norte.norte_api.dto.TypedTransactionRequestDTO;
 import com.norte.norte_api.exception.BusinessRuleException;
 import com.norte.norte_api.exception.ResourceNotFoundException;
+import com.norte.norte_api.models.CategoryModel;
 import com.norte.norte_api.models.TransactionModel;
 import com.norte.norte_api.models.TransactionStatus;
 import com.norte.norte_api.models.TransactionType;
@@ -31,9 +32,14 @@ public class TransactionService {
     private static final String TRANSACTION_NOT_FOUND_MSG = "Transação não encontrada.";
 
     private final TransactionRepository transactionRepository;
+    private final CategoryService categoryService;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(
+            TransactionRepository transactionRepository,
+            CategoryService categoryService
+    ) {
         this.transactionRepository = transactionRepository;
+        this.categoryService = categoryService;
     }
 
     @Transactional
@@ -46,7 +52,9 @@ public class TransactionService {
                 dto.date(),
                 dto.status(),
                 dto.realizedAmount(),
-                dto.realizedAt()
+                dto.realizedAt(),
+                dto.categoryId(),
+                dto.categoryName()
         );
     }
 
@@ -61,7 +69,9 @@ public class TransactionService {
                 dto.date(),
                 status,
                 dto.realizedAmount(),
-                dto.realizedAt()
+                dto.realizedAt(),
+                dto.categoryId(),
+                dto.categoryName()
         );
     }
 
@@ -76,7 +86,9 @@ public class TransactionService {
                 dto.date(),
                 status,
                 dto.realizedAmount(),
-                dto.realizedAt()
+                dto.realizedAt(),
+                dto.categoryId(),
+                dto.categoryName()
         );
     }
 
@@ -85,6 +97,7 @@ public class TransactionService {
             UUID userId,
             TransactionType type,
             TransactionStatus status,
+            UUID categoryId,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -101,6 +114,9 @@ public class TransactionService {
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
             }
             if (startDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
@@ -130,10 +146,18 @@ public class TransactionService {
     public TransactionResponseDTO update(UUID userId, UUID transactionId, TransactionRequestDTO dto) {
         TransactionModel transaction = findOwnedTransaction(userId, transactionId);
 
+        CategoryModel category = resolveCategory(
+                userId,
+                dto.categoryId(),
+                dto.categoryName(),
+                transaction.getCategoryId()
+        );
+
         transaction.setType(dto.type());
         transaction.setDescription(dto.description().trim());
         transaction.setAmount(dto.amount());
         transaction.setDate(dto.date());
+        transaction.setCategory(category);
 
         applyStatusAndRealizedFields(
                 transaction,
@@ -192,19 +216,52 @@ public class TransactionService {
             LocalDate date,
             TransactionStatus status,
             BigDecimal realizedAmount,
-            LocalDateTime realizedAt
+            LocalDateTime realizedAt,
+            UUID categoryId,
+            String categoryName
     ) {
+        CategoryModel category = resolveCategory(userId, categoryId, categoryName, null);
+
         TransactionModel transaction = new TransactionModel();
         transaction.setUserId(userId);
         transaction.setType(type);
         transaction.setDescription(description.trim());
         transaction.setAmount(amount);
         transaction.setDate(date);
+        transaction.setCategory(category);
 
         applyStatusAndRealizedFields(transaction, status, amount, realizedAmount, realizedAt);
 
         TransactionModel saved = transactionRepository.save(transaction);
         return TransactionResponseDTO.from(saved);
+    }
+
+    private CategoryModel resolveCategory(
+            UUID userId,
+            UUID categoryId,
+            String categoryName,
+            UUID currentCategoryId
+    ) {
+        boolean hasId = categoryId != null;
+        boolean hasName = categoryName != null && !categoryName.trim().isEmpty();
+
+        if (hasId && hasName) {
+            throw new BusinessRuleException("Informe apenas categoryId ou categoryName, não ambos.");
+        }
+
+        if (hasName) {
+            return categoryService.createEntity(userId, categoryName);
+        }
+
+        if (hasId) {
+            CategoryModel category = categoryService.findOwnedCategory(userId, categoryId);
+            if (!category.isActive() && !categoryId.equals(currentCategoryId)) {
+                throw new BusinessRuleException("Não é permitido associar uma categoria desativada.");
+            }
+            return category;
+        }
+
+        return null;
     }
 
     private TransactionModel findOwnedTransaction(UUID userId, UUID transactionId) {

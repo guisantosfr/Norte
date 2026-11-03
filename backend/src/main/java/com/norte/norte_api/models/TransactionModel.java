@@ -12,9 +12,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -30,8 +33,9 @@ public class TransactionModel {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "category_id")
-    private UUID categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private CategoryModel category;
 
     @Column(name = "recurring_transaction_id")
     private UUID recurringTransactionId;
@@ -95,12 +99,20 @@ public class TransactionModel {
         this.userId = userId;
     }
 
-    public UUID getCategoryId() {
-        return categoryId;
+    public CategoryModel getCategory() {
+        return category;
     }
 
-    public void setCategoryId(UUID categoryId) {
-        this.categoryId = categoryId;
+    public void setCategory(CategoryModel category) {
+        this.category = category;
+    }
+
+    public UUID getCategoryId() {
+        return category != null ? category.getId() : null;
+    }
+
+    public String getCategoryName() {
+        return category != null ? category.getName() : null;
     }
 
     public UUID getRecurringTransactionId() {

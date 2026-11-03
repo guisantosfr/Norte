@@ -154,6 +154,15 @@ public class GlobalExceptionHandler {
                 .body(ApiErrorResponse.conflict(request.getRequestURI(), ex.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateCategoryNameException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicateCategoryName(
+            DuplicateCategoryNameException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiErrorResponse.conflict(request.getRequestURI(), ex.getMessage()));
+    }
+
     // ─── 500 Internal Server Error ───────────────────────────────────────────────
 
     /**
