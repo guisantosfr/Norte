@@ -2,7 +2,7 @@ package com.norte.norte_api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.norte.norte_api.models.TransactionModel;
@@ -20,12 +20,11 @@ public record TransactionResponseDTO(
         BigDecimal amount,
         LocalDate date,
         TransactionStatus status,
-        LocalDateTime realizedAt,
+        Instant realizedAt,
         BigDecimal realizedAmount,
         Integer occurrenceNumber,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
-) {
+        Instant createdAt,
+        Instant updatedAt) {
     public static TransactionResponseDTO from(TransactionModel transaction) {
         return new TransactionResponseDTO(
                 transaction.getId(),
@@ -42,7 +41,6 @@ public record TransactionResponseDTO(
                 transaction.getRealizedAmount(),
                 transaction.getOccurrenceNumber(),
                 transaction.getCreatedAt(),
-                transaction.getUpdatedAt()
-        );
+                transaction.getUpdatedAt());
     }
 }

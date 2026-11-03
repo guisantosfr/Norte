@@ -14,7 +14,8 @@ import com.norte.norte_api.repository.UserRepository;
  * Implementação de {@link UserDetailsService} que carrega usuários pelo e-mail
  * normalizado, integrando o Spring Security ao {@link UserRepository}.
  *
- * <p>O "username" no contexto do Spring Security é o e-mail do usuário.
+ * <p>
+ * O "username" no contexto do Spring Security é o e-mail do usuário.
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -30,6 +31,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Optional<UserModel> user = userRepository.findByEmailIgnoreCase(email);
         return user
                 .map(UserPrincipal::from)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
 }

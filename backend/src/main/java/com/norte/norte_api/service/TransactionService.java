@@ -2,7 +2,7 @@ package com.norte.norte_api.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,8 +36,7 @@ public class TransactionService {
 
     public TransactionService(
             TransactionRepository transactionRepository,
-            CategoryService categoryService
-    ) {
+            CategoryService categoryService) {
         this.transactionRepository = transactionRepository;
         this.categoryService = categoryService;
     }
@@ -54,8 +53,7 @@ public class TransactionService {
                 dto.realizedAmount(),
                 dto.realizedAt(),
                 dto.categoryId(),
-                dto.categoryName()
-        );
+                dto.categoryName());
     }
 
     @Transactional
@@ -71,8 +69,7 @@ public class TransactionService {
                 dto.realizedAmount(),
                 dto.realizedAt(),
                 dto.categoryId(),
-                dto.categoryName()
-        );
+                dto.categoryName());
     }
 
     @Transactional
@@ -88,8 +85,7 @@ public class TransactionService {
                 dto.realizedAmount(),
                 dto.realizedAt(),
                 dto.categoryId(),
-                dto.categoryName()
-        );
+                dto.categoryName());
     }
 
     @Transactional(readOnly = true)
@@ -99,8 +95,7 @@ public class TransactionService {
             TransactionStatus status,
             UUID categoryId,
             LocalDate startDate,
-            LocalDate endDate
-    ) {
+            LocalDate endDate) {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new BusinessRuleException("A data inicial não pode ser posterior à data final.");
         }
@@ -150,8 +145,7 @@ public class TransactionService {
                 userId,
                 dto.categoryId(),
                 dto.categoryName(),
-                transaction.getCategoryId()
-        );
+                transaction.getCategoryId());
 
         transaction.setType(dto.type());
         transaction.setDescription(dto.description().trim());
@@ -164,8 +158,7 @@ public class TransactionService {
                 dto.status(),
                 dto.amount(),
                 dto.realizedAmount(),
-                dto.realizedAt()
-        );
+                dto.realizedAt());
 
         TransactionModel saved = transactionRepository.save(transaction);
         return TransactionResponseDTO.from(saved);
@@ -176,15 +169,14 @@ public class TransactionService {
         TransactionModel transaction = findOwnedTransaction(userId, transactionId);
 
         BigDecimal realizedAmount = dto != null ? dto.realizedAmount() : null;
-        LocalDateTime realizedAt = dto != null ? dto.realizedAt() : null;
+        Instant realizedAt = dto != null ? dto.realizedAt() : null;
 
         applyStatusAndRealizedFields(
                 transaction,
                 TransactionStatus.COMPLETED,
                 transaction.getAmount(),
                 realizedAmount,
-                realizedAt
-        );
+                realizedAt);
 
         TransactionModel saved = transactionRepository.save(transaction);
         return TransactionResponseDTO.from(saved);
@@ -216,10 +208,9 @@ public class TransactionService {
             LocalDate date,
             TransactionStatus status,
             BigDecimal realizedAmount,
-            LocalDateTime realizedAt,
+            Instant realizedAt,
             UUID categoryId,
-            String categoryName
-    ) {
+            String categoryName) {
         CategoryModel category = resolveCategory(userId, categoryId, categoryName, null);
 
         TransactionModel transaction = new TransactionModel();
@@ -240,8 +231,7 @@ public class TransactionService {
             UUID userId,
             UUID categoryId,
             String categoryName,
-            UUID currentCategoryId
-    ) {
+            UUID currentCategoryId) {
         boolean hasId = categoryId != null;
         boolean hasName = categoryName != null && !categoryName.trim().isEmpty();
 
@@ -274,13 +264,12 @@ public class TransactionService {
             TransactionStatus status,
             BigDecimal amount,
             BigDecimal realizedAmount,
-            LocalDateTime realizedAt
-    ) {
+            Instant realizedAt) {
         transaction.setStatus(status);
 
         if (status == TransactionStatus.COMPLETED) {
             transaction.setRealizedAmount(realizedAmount != null ? realizedAmount : amount);
-            transaction.setRealizedAt(realizedAt != null ? realizedAt : LocalDateTime.now());
+            transaction.setRealizedAt(realizedAt != null ? realizedAt : Instant.now());
         } else {
             transaction.setRealizedAmount(realizedAmount);
             transaction.setRealizedAt(realizedAt);

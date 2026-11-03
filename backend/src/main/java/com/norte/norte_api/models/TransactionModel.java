@@ -2,7 +2,7 @@ package com.norte.norte_api.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,8 +18,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -58,7 +56,7 @@ public class TransactionModel {
     private TransactionStatus status;
 
     @Column(name = "realized_at")
-    private LocalDateTime realizedAt;
+    private Instant realizedAt;
 
     @Column(name = "realized_amount", precision = 19, scale = 2)
     private BigDecimal realizedAmount;
@@ -68,24 +66,11 @@ public class TransactionModel {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    private Instant updatedAt;
 
     public UUID getId() {
         return id;
@@ -163,11 +148,11 @@ public class TransactionModel {
         this.status = status;
     }
 
-    public LocalDateTime getRealizedAt() {
+    public Instant getRealizedAt() {
         return realizedAt;
     }
 
-    public void setRealizedAt(LocalDateTime realizedAt) {
+    public void setRealizedAt(Instant realizedAt) {
         this.realizedAt = realizedAt;
     }
 
@@ -187,11 +172,11 @@ public class TransactionModel {
         this.occurrenceNumber = occurrenceNumber;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 }
