@@ -4,7 +4,7 @@ CREATE TABLE notes (
     user_id UUID NOT NULL,
 
     title VARCHAR(150),
-    content TEXT NOT NULL,
+    content VARCHAR(5000) NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
