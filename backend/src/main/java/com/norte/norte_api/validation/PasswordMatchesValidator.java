@@ -9,7 +9,7 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
 
     @Override
     public boolean isValid(UserRequestDTO dto, ConstraintValidatorContext context) {
-        if (dto.password() == null || dto.confirmPassword() == null) {
+        if (dto == null || dto.password() == null || dto.confirmPassword() == null) {
             // @NotBlank nos campos individuais já cobre o caso de nulo/vazio
             return true;
         }

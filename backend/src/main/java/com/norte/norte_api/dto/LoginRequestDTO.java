@@ -1,5 +1,7 @@
 package com.norte.norte_api.dto;
 
+import com.norte.norte_api.validation.MaxUtf8Bytes;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -12,7 +14,7 @@ public record LoginRequestDTO(
 
                 @NotBlank(message = "O e-mail é obrigatório") @Email(message = "O e-mail informado não é válido") @Size(max = 100, message = "O e-mail deve ter no máximo 100 caracteres") String email,
 
-                @NotBlank(message = "A senha é obrigatória") @Size(min = 8, max = 72, message = "A senha deve ter entre 8 e 72 caracteres") String password
+                @NotBlank(message = "A senha é obrigatória") @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres") @MaxUtf8Bytes(max = 72, message = "A senha deve ter no máximo 72 bytes em UTF-8") String password
 
 ) {
 }

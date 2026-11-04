@@ -1,18 +1,26 @@
 package com.norte.norte_api.exception;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +37,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * {@code JwtAccessDeniedHandler}, que escrevem o mesmo formato de resposta.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -39,9 +47,12 @@ public class GlobalExceptionHandler {
      * Bean Validation falhou em campos do DTO ({@code @NotBlank}, {@code @Email}, etc.)
      * ou em validações de classe ({@code @PasswordMatches}).
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidation(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
         List<ApiErrorResponse.FieldError> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
@@ -59,35 +70,42 @@ public class GlobalExceptionHandler {
         List<ApiErrorResponse.FieldError> allErrors = new java.util.ArrayList<>(fieldErrors);
         allErrors.addAll(globalErrors);
 
-        return ResponseEntity
-                .badRequest()
-                .body(ApiErrorResponse.validation(request.getRequestURI(), allErrors));
+        ApiErrorResponse body = ApiErrorResponse.validation(extractPath(request), allErrors);
+        return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     /**
      * Corpo da requisição é JSON inválido ou tipo incompatível (ex.: string onde se espera número).
      */
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiErrorResponse> handleNotReadable(
-            HttpMessageNotReadableException ex, HttpServletRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
-        return ResponseEntity
-                .badRequest()
-                .body(ApiErrorResponse.badRequest(request.getRequestURI(),
-                        "O corpo da requisição está ausente ou mal formado."));
+        ApiErrorResponse body = ApiErrorResponse.badRequest(extractPath(request),
+                "O corpo da requisição está ausente ou mal formado.");
+        return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     /**
      * Parâmetro de rota ou query com tipo inválido (ex.: UUID, data ou enum mal formado).
      */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
-            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+            TypeMismatchException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
-        return ResponseEntity
-                .badRequest()
-                .body(ApiErrorResponse.badRequest(request.getRequestURI(),
-                        "Parâmetro inválido: '" + ex.getName() + "'."));
+        String paramName = (ex instanceof MethodArgumentTypeMismatchException matme)
+                ? matme.getName()
+                : ex.getPropertyName();
+
+        ApiErrorResponse body = ApiErrorResponse.badRequest(extractPath(request),
+                "Parâmetro inválido: '" + paramName + "'.");
+        return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     /**
@@ -133,14 +151,16 @@ public class GlobalExceptionHandler {
     /**
      * Rota requisitada não existe no servidor.
      */
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleNoResourceFound(
-            NoResourceFoundException ex, HttpServletRequest request) {
+    @Override
+    protected ResponseEntity<Object> handleNoResourceFoundException(
+            NoResourceFoundException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ApiErrorResponse.notFound(request.getRequestURI(),
-                        "O recurso solicitado não foi encontrado."));
+        ApiErrorResponse body = ApiErrorResponse.notFound(extractPath(request),
+                "O recurso solicitado não foi encontrado.");
+        return handleExceptionInternal(ex, body, headers, HttpStatus.NOT_FOUND, request);
     }
 
     // ─── 409 Conflict ───────────────────────────────────────────────────────────
@@ -161,6 +181,49 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiErrorResponse.conflict(request.getRequestURI(), ex.getMessage()));
+    }
+
+    // ─── Outras exceções padrão do Spring MVC ───────────────────────────────────
+
+    /**
+     * Garante que qualquer outra exceção padrão do Spring MVC tratada por
+     * {@link ResponseEntityExceptionHandler} (ex.: 405 Method Not Allowed,
+     * 415 Unsupported Media Type, parâmetros obrigatórios ausentes) também
+     * retorne o envelope {@link ApiErrorResponse}.
+     */
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+            Exception ex,
+            Object body,
+            HttpHeaders headers,
+            HttpStatusCode statusCode,
+            WebRequest request) {
+
+        if (!(body instanceof ApiErrorResponse)) {
+            HttpStatus httpStatus = HttpStatus.resolve(statusCode.value());
+            if (httpStatus == null) {
+                httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+            String path = extractPath(request);
+            if (httpStatus.is5xxServerError()) {
+                String correlationId = UUID.randomUUID().toString();
+                log.error("[{}] Erro inesperado em {}: {}", correlationId, path, ex.getMessage(), ex);
+                body = ApiErrorResponse.internalError(path, correlationId);
+            } else {
+                String message = (ex instanceof ErrorResponse errorResponse && errorResponse.getBody().getDetail() != null)
+                        ? errorResponse.getBody().getDetail()
+                        : httpStatus.getReasonPhrase();
+                body = new ApiErrorResponse(
+                        Instant.now(),
+                        httpStatus,
+                        httpStatus.name(),
+                        message,
+                        path,
+                        List.of());
+            }
+        }
+
+        return super.handleExceptionInternal(ex, body, headers, statusCode, request);
     }
 
     // ─── 500 Internal Server Error ───────────────────────────────────────────────
@@ -187,5 +250,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiErrorResponse.internalError(request.getRequestURI(), correlationId));
+    }
+
+    private String extractPath(WebRequest request) {
+        if (request instanceof ServletWebRequest servletWebRequest) {
+            return servletWebRequest.getRequest().getRequestURI();
+        }
+        return "";
     }
 }

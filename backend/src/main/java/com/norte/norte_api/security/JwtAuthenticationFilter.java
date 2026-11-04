@@ -3,6 +3,7 @@ package com.norte.norte_api.security;
 import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -18,11 +19,15 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Filtro de autenticação JWT executado uma vez por requisição.
  *
- * <p>Extrai o Bearer token do header {@code Authorization}, valida assinatura e
- * expiração via {@link JwtTokenProvider}, e popula o {@link SecurityContextHolder}
+ * <p>
+ * Extrai o Bearer token do header {@code Authorization}, valida assinatura e
+ * expiração via {@link JwtTokenProvider}, e popula o
+ * {@link SecurityContextHolder}
  * caso o token seja válido. Requisições sem token ou com token inválido passam
- * adiante sem autenticação — o Spring Security rejeita o acesso a rotas protegidas
- * através do {@code AuthenticationEntryPoint} configurado na {@code SecurityConfig}.
+ * adiante sem autenticação — o Spring Security rejeita o acesso a rotas
+ * protegidas
+ * através do {@code AuthenticationEntryPoint} configurado na
+ * {@code SecurityConfig}.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,15 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsServiceImpl userDetailsService;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
-                                   UserDetailsServiceImpl userDetailsService) {
+            UserDetailsServiceImpl userDetailsService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
 
         String token = extractToken(request);
 
@@ -49,11 +54,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtTokenProvider.extractSubject(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,
+                    null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+
+            SecurityContextHolder.setContext(context);
         }
 
         filterChain.doFilter(request, response);
@@ -62,7 +70,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Extrai o token bruto do header Authorization.
      *
-     * @return o token sem o prefixo {@code "Bearer "}, ou {@code null} se ausente ou mal formado
+     * @return o token sem o prefixo {@code "Bearer "}, ou {@code null} se ausente
+     *         ou mal formado
      */
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
