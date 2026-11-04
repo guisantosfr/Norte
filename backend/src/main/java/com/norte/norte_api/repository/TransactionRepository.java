@@ -14,12 +14,17 @@ import com.norte.norte_api.models.TransactionModel;
 
 public interface TransactionRepository extends JpaRepository<TransactionModel, UUID>, JpaSpecificationExecutor<TransactionModel> {
 
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "recurringTransaction"})
     Optional<TransactionModel> findByIdAndUserId(UUID id, UUID userId);
 
     @Override
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "recurringTransaction"})
     List<TransactionModel> findAll(Specification<TransactionModel> spec, Sort sort);
+
+    @EntityGraph(attributePaths = {"category", "recurringTransaction"})
+    List<TransactionModel> findAllByRecurringTransaction_IdAndUserIdOrderByOccurrenceNumberAsc(UUID recurringId, UUID userId);
+
+    boolean existsByRecurringTransaction_IdAndUserId(UUID recurringId, UUID userId);
 
     boolean existsByCategory_IdAndUserId(UUID categoryId, UUID userId);
 }

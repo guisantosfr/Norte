@@ -1,8 +1,8 @@
 package com.norte.norte_api.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -94,6 +94,7 @@ public class TransactionService {
             TransactionType type,
             TransactionStatus status,
             UUID categoryId,
+            UUID recurringTransactionId,
             LocalDate startDate,
             LocalDate endDate) {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
@@ -112,6 +113,9 @@ public class TransactionService {
             }
             if (categoryId != null) {
                 predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            if (recurringTransactionId != null) {
+                predicates.add(cb.equal(root.get("recurringTransaction").get("id"), recurringTransactionId));
             }
             if (startDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
@@ -141,7 +145,7 @@ public class TransactionService {
     public TransactionResponseDTO update(UUID userId, UUID transactionId, TransactionRequestDTO dto) {
         TransactionModel transaction = findOwnedTransaction(userId, transactionId);
 
-        CategoryModel category = resolveCategory(
+        CategoryModel category = categoryService.resolveCategoryForAssociation(
                 userId,
                 dto.categoryId(),
                 dto.categoryName(),
@@ -211,7 +215,11 @@ public class TransactionService {
             Instant realizedAt,
             UUID categoryId,
             String categoryName) {
-        CategoryModel category = resolveCategory(userId, categoryId, categoryName, null);
+        CategoryModel category = categoryService.resolveCategoryForAssociation(
+                userId,
+                categoryId,
+                categoryName,
+                null);
 
         TransactionModel transaction = new TransactionModel();
         transaction.setUserId(userId);
@@ -225,33 +233,6 @@ public class TransactionService {
 
         TransactionModel saved = transactionRepository.save(transaction);
         return TransactionResponseDTO.from(saved);
-    }
-
-    private CategoryModel resolveCategory(
-            UUID userId,
-            UUID categoryId,
-            String categoryName,
-            UUID currentCategoryId) {
-        boolean hasId = categoryId != null;
-        boolean hasName = categoryName != null && !categoryName.trim().isEmpty();
-
-        if (hasId && hasName) {
-            throw new BusinessRuleException("Informe apenas categoryId ou categoryName, não ambos.");
-        }
-
-        if (hasName) {
-            return categoryService.createEntity(userId, categoryName);
-        }
-
-        if (hasId) {
-            CategoryModel category = categoryService.findOwnedCategory(userId, categoryId);
-            if (!category.isActive() && !categoryId.equals(currentCategoryId)) {
-                throw new BusinessRuleException("Não é permitido associar uma categoria desativada.");
-            }
-            return category;
-        }
-
-        return null;
     }
 
     private TransactionModel findOwnedTransaction(UUID userId, UUID transactionId) {

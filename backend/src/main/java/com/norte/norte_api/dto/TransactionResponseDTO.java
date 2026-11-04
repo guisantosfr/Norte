@@ -1,8 +1,8 @@
 package com.norte.norte_api.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.norte.norte_api.models.TransactionModel;
@@ -23,6 +23,7 @@ public record TransactionResponseDTO(
         Instant realizedAt,
         BigDecimal realizedAmount,
         Integer occurrenceNumber,
+        Integer totalOccurrences,
         Instant createdAt,
         Instant updatedAt) {
     public static TransactionResponseDTO from(TransactionModel transaction) {
@@ -40,6 +41,7 @@ public record TransactionResponseDTO(
                 transaction.getRealizedAt(),
                 transaction.getRealizedAmount(),
                 transaction.getOccurrenceNumber(),
+                transaction.getTotalOccurrences(),
                 transaction.getCreatedAt(),
                 transaction.getUpdatedAt());
     }

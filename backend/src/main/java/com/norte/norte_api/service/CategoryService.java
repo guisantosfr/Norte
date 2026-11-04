@@ -11,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.norte.norte_api.dto.CategoryRequestDTO;
 import com.norte.norte_api.dto.CategoryResponseDTO;
+import com.norte.norte_api.exception.BusinessRuleException;
 import com.norte.norte_api.exception.DuplicateCategoryNameException;
 import com.norte.norte_api.exception.ResourceNotFoundException;
 import com.norte.norte_api.models.CategoryModel;
 import com.norte.norte_api.repository.CategoryRepository;
+import com.norte.norte_api.repository.RecurringTransactionRepository;
 import com.norte.norte_api.repository.TransactionRepository;
 
 @Service
@@ -24,13 +26,16 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final RecurringTransactionRepository recurringTransactionRepository;
 
     public CategoryService(
             CategoryRepository categoryRepository,
-            TransactionRepository transactionRepository
+            TransactionRepository transactionRepository,
+            RecurringTransactionRepository recurringTransactionRepository
     ) {
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.recurringTransactionRepository = recurringTransactionRepository;
     }
 
     @Transactional
@@ -105,7 +110,10 @@ public class CategoryService {
     public void delete(UUID userId, UUID categoryId) {
         CategoryModel category = findOwnedCategory(userId, categoryId);
 
-        if (transactionRepository.existsByCategory_IdAndUserId(categoryId, userId)) {
+        boolean hasLinkedTransactions = transactionRepository.existsByCategory_IdAndUserId(categoryId, userId);
+        boolean hasLinkedRecurrences = recurringTransactionRepository.existsByCategory_IdAndUserId(categoryId, userId);
+
+        if (hasLinkedTransactions || hasLinkedRecurrences) {
             category.setActive(false);
             categoryRepository.save(category);
         } else {
@@ -117,6 +125,35 @@ public class CategoryService {
     public CategoryModel findOwnedCategory(UUID userId, UUID categoryId) {
         return categoryRepository.findByIdAndUserId(categoryId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(CATEGORY_NOT_FOUND_MSG));
+    }
+
+    @Transactional
+    public CategoryModel resolveCategoryForAssociation(
+            UUID userId,
+            UUID categoryId,
+            String categoryName,
+            UUID currentCategoryId
+    ) {
+        boolean hasId = categoryId != null;
+        boolean hasName = categoryName != null && !categoryName.trim().isEmpty();
+
+        if (hasId && hasName) {
+            throw new BusinessRuleException("Informe apenas categoryId ou categoryName, não ambos.");
+        }
+
+        if (hasName) {
+            return createEntity(userId, categoryName);
+        }
+
+        if (hasId) {
+            CategoryModel category = findOwnedCategory(userId, categoryId);
+            if (!category.isActive() && !categoryId.equals(currentCategoryId)) {
+                throw new BusinessRuleException("Não é permitido associar uma categoria desativada.");
+            }
+            return category;
+        }
+
+        return null;
     }
 
     private static boolean isConstraintViolation(DataIntegrityViolationException ex, String constraintHint) {

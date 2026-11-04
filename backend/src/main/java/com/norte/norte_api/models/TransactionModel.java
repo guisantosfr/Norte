@@ -1,8 +1,8 @@
 package com.norte.norte_api.models;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,8 +35,9 @@ public class TransactionModel {
     @JoinColumn(name = "category_id")
     private CategoryModel category;
 
-    @Column(name = "recurring_transaction_id")
-    private UUID recurringTransactionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recurring_transaction_id")
+    private RecurringTransactionModel recurringTransaction;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -100,12 +101,20 @@ public class TransactionModel {
         return category != null ? category.getName() : null;
     }
 
-    public UUID getRecurringTransactionId() {
-        return recurringTransactionId;
+    public RecurringTransactionModel getRecurringTransaction() {
+        return recurringTransaction;
     }
 
-    public void setRecurringTransactionId(UUID recurringTransactionId) {
-        this.recurringTransactionId = recurringTransactionId;
+    public void setRecurringTransaction(RecurringTransactionModel recurringTransaction) {
+        this.recurringTransaction = recurringTransaction;
+    }
+
+    public UUID getRecurringTransactionId() {
+        return recurringTransaction != null ? recurringTransaction.getId() : null;
+    }
+
+    public Integer getTotalOccurrences() {
+        return recurringTransaction != null ? recurringTransaction.getOccurrences() : null;
     }
 
     public TransactionType getType() {
