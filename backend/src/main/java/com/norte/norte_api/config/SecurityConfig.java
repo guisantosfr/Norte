@@ -54,8 +54,8 @@ public class SecurityConfig {
 
     /** Rotas do springdoc liberadas apenas no perfil {@code dev}. */
     private static final String[] SWAGGER_PATHS = {
-            "/v3/api-docs",
-            "/v3/api-docs/**",
+            "/api-docs",
+            "/api-docs/**",
             "/swagger-ui.html",
             "/swagger-ui/**"
     };

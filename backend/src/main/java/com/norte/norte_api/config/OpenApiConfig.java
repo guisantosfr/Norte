@@ -12,27 +12,28 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 /**
  * Metadados da documentação OpenAPI — carregado apenas no perfil {@code dev}.
  *
- * <p>Registra o esquema {@code bearerAuth} (JWT) para que o Swagger UI exiba o
+ * <p>
+ * Registra o esquema {@code bearerAuth} (JWT) para que o Swagger UI exiba o
  * botão "Authorize" e envie o header {@code Authorization: Bearer <token>}.
  */
 @Configuration
 @Profile("dev")
 public class OpenApiConfig {
 
-    private static final String BEARER_SCHEME = "bearerAuth";
+        private static final String BEARER_SCHEME = "bearerAuth";
 
-    @Bean
-    public OpenAPI norteOpenApi() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Norte API")
-                        .version("v1")
-                        .description("API REST do Norte. Obtenha um token em /auth/register ou "
-                                + "/auth/login e use o botão Authorize."))
-                .components(new Components()
-                        .addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")));
-    }
+        @Bean
+        public OpenAPI norteOpenApi() {
+                return new OpenAPI()
+                                .info(new Info()
+                                                .title("Norte API")
+                                                .version("v1")
+                                                .description("API REST da aplicação Norte. Obtenha um token em /auth/register ou "
+                                                                + "/auth/login e use o botão Authorize."))
+                                .components(new Components()
+                                                .addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()
+                                                                .type(SecurityScheme.Type.HTTP)
+                                                                .scheme("bearer")
+                                                                .bearerFormat("JWT")));
+        }
 }
