@@ -3,7 +3,7 @@ package com.norte.norte_api.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -49,10 +49,8 @@ import com.norte.norte_api.security.JwtAuthenticationFilter;
  */
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
-
-    @Value("${cors.allowed-origins}")
-    private String allowedOriginsRaw;
 
     /** Rotas do springdoc liberadas apenas no perfil {@code dev}. */
     private static final String[] SWAGGER_PATHS = {
@@ -66,15 +64,18 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final Environment environment;
+    private final CorsProperties corsProperties;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint authenticationEntryPoint,
             JwtAccessDeniedHandler accessDeniedHandler,
-            Environment environment) {
+            Environment environment,
+            CorsProperties corsProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.environment = environment;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -140,7 +141,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         List<String> allowedOrigins = Arrays.stream(
-                allowedOriginsRaw.split(","))
+                corsProperties.allowedOrigins().split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList();

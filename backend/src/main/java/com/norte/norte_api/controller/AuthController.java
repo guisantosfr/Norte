@@ -13,6 +13,7 @@ import com.norte.norte_api.dto.AuthResponseDTO;
 import com.norte.norte_api.dto.LoginRequestDTO;
 import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
+import com.norte.norte_api.exception.ResourceNotFoundException;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.UserPrincipal;
 import com.norte.norte_api.service.AuthService;
@@ -67,6 +68,6 @@ public class AuthController {
     public UserResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
         return userRepository.findByEmailIgnoreCase(principal.getUsername())
                 .map(UserResponseDTO::from)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 }

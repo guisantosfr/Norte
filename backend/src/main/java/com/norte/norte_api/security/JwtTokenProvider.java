@@ -15,14 +15,17 @@ import io.jsonwebtoken.security.Keys;
 /**
  * Responsável pela emissão e validação de tokens JWT.
  *
- * <p>Usa HMAC-SHA256 (HS256) com uma chave simétrica lida de variável de ambiente.
+ * <p>
+ * Usa HMAC-SHA256 (HS256) com uma chave simétrica lida de variável de ambiente.
  * A chave nunca é exposta em código-fonte.
  *
- * <p>Claims incluídos no token:
+ * <p>
+ * Claims incluídos no token:
  * <ul>
- *   <li>{@code sub} — e-mail normalizado do usuário (identificador principal)</li>
- *   <li>{@code iat} — instante de emissão</li>
- *   <li>{@code exp} — instante de expiração</li>
+ * <li>{@code sub} — e-mail normalizado do usuário (identificador
+ * principal)</li>
+ * <li>{@code iat} — instante de emissão</li>
+ * <li>{@code exp} — instante de expiração</li>
  * </ul>
  */
 @Component
@@ -31,9 +34,11 @@ public class JwtTokenProvider {
     private final SecretKey signingKey;
     private final long expirationMs;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms}") long expirationMs) {
+    public JwtTokenProvider(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration-ms}") long expirationMs) {
+        if (expirationMs <= 0) {
+            throw new IllegalArgumentException("JWT expiration must be positive");
+        }
+
         this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.expirationMs = expirationMs;
     }
@@ -50,7 +55,7 @@ public class JwtTokenProvider {
                 .subject(email)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expirationMs))
-                .signWith(signingKey)
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -83,7 +88,8 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // Token inválido, expirado, assinatura incorreta — todas as falhas tratadas igualmente
+            // Token inválido, expirado, assinatura incorreta — todas as falhas tratadas
+            // igualmente
             return false;
         }
     }
