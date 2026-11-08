@@ -16,23 +16,27 @@ import com.norte.norte_api.models.UserModel;
  * o contexto de segurança. Isso evita que o SecurityContextHolder carregue
  * entidades JPA gerenciadas, o que poderia causar problemas com lazy loading fora
  * do contexto transacional.
+ *
+ * <p>Usado somente pelo filtro JWT para representar o usuário autenticado nas
+ * requisições. Por isso <b>não carrega a senha</b>: a verificação de credenciais no
+ * login é feita pelo {@code DaoAuthenticationProvider} com outro {@link UserDetails}
+ * (ver {@link UserDetailsServiceImpl#loadUserByUsername(String)}).
  */
 public final class UserPrincipal implements UserDetails {
 
     private final UUID id;
     private final String email;
-    private final String password;
 
-    private UserPrincipal(UUID id, String email, String password) {
+    private UserPrincipal(UUID id, String email) {
         this.id = id;
         this.email = email;
-        this.password = password;
     }
 
     public static UserPrincipal from(UserModel user) {
-        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword());
+        return new UserPrincipal(user.getId(), user.getEmail());
     }
 
+    /** Identificador do usuário autenticado, para uso direto pelos serviços. */
     public UUID getId() {
         return id;
     }
@@ -42,9 +46,13 @@ public final class UserPrincipal implements UserDetails {
         return email;
     }
 
+    /**
+     * Sem senha: este principal não participa da verificação de credenciais.
+     * O método existe apenas porque é exigido por {@link UserDetails}.
+     */
     @Override
     public String getPassword() {
-        return password;
+        return null;
     }
 
     /** Sem roles por ora — autorização é apenas autenticado vs. não autenticado. */

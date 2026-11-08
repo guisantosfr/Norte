@@ -2,8 +2,6 @@ package com.norte.norte_api.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +11,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.norte.norte_api.exception.DataIntegrityViolationInspector;
 import com.norte.norte_api.models.NotificationModel;
 import com.norte.norte_api.models.TransactionModel;
 import com.norte.norte_api.repository.NotificationRepository;
@@ -31,19 +30,24 @@ public class NotificationGeneratorService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationGeneratorService.class);
 
+    private static final String NOTIFICATION_TRANSACTION_TYPE_INDEX = "uk_notification_transaction_type";
+
     private final List<ReminderRule> reminderRules;
     private final NotificationRepository notificationRepository;
     private final TransactionTemplate requiresNewTx;
+    private final DataIntegrityViolationInspector integrityViolationInspector;
 
     public NotificationGeneratorService(
             List<ReminderRule> reminderRules,
             NotificationRepository notificationRepository,
-            PlatformTransactionManager transactionManager
+            PlatformTransactionManager transactionManager,
+            DataIntegrityViolationInspector integrityViolationInspector
     ) {
         this.reminderRules = reminderRules;
         this.notificationRepository = notificationRepository;
         this.requiresNewTx = new TransactionTemplate(transactionManager);
         this.requiresNewTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.integrityViolationInspector = integrityViolationInspector;
     }
 
     public int generateForDate(LocalDate referenceDate) {
@@ -83,20 +87,12 @@ public class NotificationGeneratorService {
             });
             return true;
         } catch (DataIntegrityViolationException ex) {
-            if (isDuplicateNotificationViolation(ex)) {
+            if (integrityViolationInspector.isUniqueViolation(ex, NOTIFICATION_TRANSACTION_TYPE_INDEX)) {
                 log.debug("Lembrete {} já existente para a transação {}, ignorando duplicidade.",
                         rule.getType(), tx.getId());
                 return false;
             }
             throw ex;
         }
-    }
-
-    private static boolean isDuplicateNotificationViolation(DataIntegrityViolationException ex) {
-        String message = Optional.ofNullable(ex.getMostSpecificCause())
-                .map(Throwable::getMessage)
-                .orElseGet(ex::getMessage);
-        return message != null
-                && message.toLowerCase(Locale.ROOT).contains("uk_notification_transaction_type");
     }
 }

@@ -1,8 +1,6 @@
 package com.norte.norte_api.service;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.norte.norte_api.dto.CategoryRequestDTO;
 import com.norte.norte_api.dto.CategoryResponseDTO;
 import com.norte.norte_api.exception.BusinessRuleException;
+import com.norte.norte_api.exception.DataIntegrityViolationInspector;
 import com.norte.norte_api.exception.DuplicateCategoryNameException;
 import com.norte.norte_api.exception.ResourceNotFoundException;
 import com.norte.norte_api.models.CategoryModel;
@@ -23,19 +22,23 @@ import com.norte.norte_api.repository.TransactionRepository;
 public class CategoryService {
 
     private static final String CATEGORY_NOT_FOUND_MSG = "Categoria não encontrada.";
+    private static final String CATEGORIES_USER_NAME_CONSTRAINT = "uk_categories_user_name";
 
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
     private final RecurringTransactionRepository recurringTransactionRepository;
+    private final DataIntegrityViolationInspector integrityViolationInspector;
 
     public CategoryService(
             CategoryRepository categoryRepository,
             TransactionRepository transactionRepository,
-            RecurringTransactionRepository recurringTransactionRepository
+            RecurringTransactionRepository recurringTransactionRepository,
+            DataIntegrityViolationInspector integrityViolationInspector
     ) {
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
         this.recurringTransactionRepository = recurringTransactionRepository;
+        this.integrityViolationInspector = integrityViolationInspector;
     }
 
     @Transactional
@@ -60,7 +63,7 @@ public class CategoryService {
         try {
             return categoryRepository.saveAndFlush(category);
         } catch (DataIntegrityViolationException ex) {
-            if (isConstraintViolation(ex, "uk_categories_user_name")) {
+            if (integrityViolationInspector.isUniqueViolation(ex, CATEGORIES_USER_NAME_CONSTRAINT)) {
                 throw new DuplicateCategoryNameException();
             }
             throw ex;
@@ -99,7 +102,7 @@ public class CategoryService {
             CategoryModel saved = categoryRepository.saveAndFlush(category);
             return CategoryResponseDTO.from(saved);
         } catch (DataIntegrityViolationException ex) {
-            if (isConstraintViolation(ex, "uk_categories_user_name")) {
+            if (integrityViolationInspector.isUniqueViolation(ex, CATEGORIES_USER_NAME_CONSTRAINT)) {
                 throw new DuplicateCategoryNameException();
             }
             throw ex;
@@ -154,12 +157,5 @@ public class CategoryService {
         }
 
         return null;
-    }
-
-    private static boolean isConstraintViolation(DataIntegrityViolationException ex, String constraintHint) {
-        String message = Optional.ofNullable(ex.getMostSpecificCause())
-                .map(Throwable::getMessage)
-                .orElseGet(ex::getMessage);
-        return message != null && message.toLowerCase(Locale.ROOT).contains(constraintHint.toLowerCase(Locale.ROOT));
     }
 }

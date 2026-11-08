@@ -1,7 +1,6 @@
 package com.norte.norte_api.service;
 
 import java.util.Locale;
-import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,11 +14,11 @@ import com.norte.norte_api.dto.AuthResponseDTO;
 import com.norte.norte_api.dto.LoginRequestDTO;
 import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
+import com.norte.norte_api.exception.DataIntegrityViolationInspector;
 import com.norte.norte_api.exception.DuplicateEmailException;
 import com.norte.norte_api.models.UserModel;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.JwtTokenProvider;
-import com.norte.norte_api.security.UserPrincipal;
 
 import jakarta.transaction.Transactional;
 
@@ -37,20 +36,24 @@ import jakarta.transaction.Transactional;
 public class AuthService {
 
     private static final String INVALID_CREDENTIALS_MSG = "Credenciais inválidas";
+    private static final String USERS_EMAIL_UNIQUE_INDEX = "uk_users_email";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final DataIntegrityViolationInspector integrityViolationInspector;
 
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider jwtTokenProvider,
-            AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager,
+            DataIntegrityViolationInspector integrityViolationInspector) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
+        this.integrityViolationInspector = integrityViolationInspector;
     }
 
     /**
@@ -80,7 +83,7 @@ public class AuthService {
             String token = jwtTokenProvider.generateToken(savedUser.getEmail());
             return AuthResponseDTO.of(token, UserResponseDTO.from(savedUser));
         } catch (DataIntegrityViolationException ex) {
-            if (isConstraintViolation(ex, "uk_users_email")) {
+            if (integrityViolationInspector.isUniqueViolation(ex, USERS_EMAIL_UNIQUE_INDEX)) {
                 throw new DuplicateEmailException();
             }
             throw ex;
@@ -89,6 +92,11 @@ public class AuthService {
 
     /**
      * Autentica o usuário via {@link AuthenticationManager} e emite um token JWT.
+     *
+     * <p>A verificação de senha é feita pelo {@code DaoAuthenticationProvider},
+     * que trabalha com um {@code UserDetails} próprio do fluxo de login (com o
+     * hash da senha). O {@code UserPrincipal}, sem senha, é usado apenas pelo
+     * filtro JWT nas requisições autenticadas.
      *
      * @param loginRequest credenciais de entrada
      * @return resposta com token Bearer e dados públicos do usuário
@@ -101,9 +109,7 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, loginRequest.password()));
 
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-
-        UserModel user = userRepository.findById(principal.getId())
+        UserModel user = userRepository.findByEmailIgnoreCase(authentication.getName())
                 .orElseThrow(() -> new BadCredentialsException(INVALID_CREDENTIALS_MSG));
 
         String token = jwtTokenProvider.generateToken(user.getEmail());
@@ -114,12 +120,5 @@ public class AuthService {
 
     private static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static boolean isConstraintViolation(DataIntegrityViolationException ex, String constraintHint) {
-        String message = Optional.ofNullable(ex.getMostSpecificCause())
-                .map(Throwable::getMessage)
-                .orElseGet(ex::getMessage);
-        return message != null && message.toLowerCase(Locale.ROOT).contains(constraintHint.toLowerCase(Locale.ROOT));
     }
 }
