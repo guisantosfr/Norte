@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* =========================================
+   CONFIGURAÇÃO DO TEMA DARK
+   ========================================= */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =========================================
+   TEMA CLARO (DEFAULT)
+   ========================================= */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --primary: #17324D;
+  --support: #2A8C82;
+
+  /* Backgrounds */
+  --background: #F3F6F8;
+  --surface: #F9FAFB;
+
+  /* Typography */
+  --text: #243746;
+  --text-secondary: #607381;
+  --text-muted: #84919B;
+
+  /* Borders */
+  --border: #DCE3E8;
+
+  /* Semantic colors */
+  --income: #25845B;
+  --expense: #D9534F;
+  --pending: #D69A36;
+  --cancelled: #84919B;
+  --info: #3978B8;
+}
+
+/* =========================================
+   TEMA ESCURO
+   ========================================= */
+
+.dark {
+  color-scheme: dark;
+
+  /* Brand */
+  --primary: #0D2235;
+  --support: #43A99C;
+
+  /* Backgrounds */
+  --background: #101C28;
+  --surface: #192938;
+
+  /* Typography */
+  --text: #E5EDF2;
+  --text-secondary: #A9BAC6;
+  --text-muted: #8195A3;
+
+  /* Borders */
+  --border: #304353;
+
+  /* Semantic colors */
+  --income: #48B783;
+  --expense: #EF7772;
+  --pending: #E5B45D;
+  --cancelled: #A0ADB7;
+  --info: #69A5E0;
+}
+
+/* =========================================
+   TAILWIND THEME TOKENS
+   ========================================= */
+
+@theme inline {
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-support: var(--support);
+
+  /* Backgrounds */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+
+  /* Typography */
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Borders */
+  --color-border: var(--border);
+
+  /* Semantic colors */
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-pending: var(--pending);
+  --color-cancelled: var(--cancelled);
+  --color-info: var(--info);
+}
+
+/* =========================================
+   BASE STYLES
+   ========================================= */
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-text;
+  }
+}
