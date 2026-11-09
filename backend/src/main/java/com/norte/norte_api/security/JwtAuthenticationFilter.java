@@ -2,9 +2,12 @@ package com.norte.norte_api.security;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -27,9 +30,16 @@ import jakarta.servlet.http.HttpServletResponse;
  * protegidas
  * através do {@code AuthenticationEntryPoint} configurado na
  * {@code SecurityConfig}.
+ *
+ * <p>
+ * Apenas {@link UsernameNotFoundException} (usuário do token removido) é
+ * tratada aqui. Outras falhas — por exemplo, banco indisponível — propagam
+ * normalmente, para não serem mascaradas como falha de autenticação.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -49,24 +59,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String email = jwtTokenProvider.extractSubject(token);
-
-            // Se o usuário do token não existir mais, a requisição segue sem
-            // autenticação e rotas protegidas respondem 401 pelo entry point.
-            userDetailsService.loadPrincipalByEmail(email).ifPresent(principal -> {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        principal, null, principal.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(authentication);
-
-                SecurityContextHolder.setContext(context);
-            });
+        if (token != null) {
+            jwtTokenProvider.extractSubjectIfValid(token)
+                    .ifPresent(email -> authenticate(email, request));
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticate(String email, HttpServletRequest request) {
+        UserPrincipal principal;
+        try {
+            principal = userDetailsService.loadPrincipalByEmail(email);
+        } catch (UsernameNotFoundException ex) {
+            // Token válido, mas o usuário não existe mais: a requisição segue como
+            // anônima e rotas protegidas respondem 401 pelo entry point.
+            log.debug("Token JWT válido para usuário inexistente; requisição seguirá sem autenticação.");
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+
+        SecurityContextHolder.setContext(context);
     }
 
     /**

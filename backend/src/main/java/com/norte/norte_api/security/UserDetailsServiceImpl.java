@@ -1,7 +1,5 @@
 package com.norte.norte_api.security;
 
-import java.util.Optional;
-
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,10 +48,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     /**
      * Usado pelo filtro JWT para montar o principal das requisições autenticadas.
      *
-     * @return o principal (sem senha), ou vazio se o usuário não existir mais
+     * @return o principal (sem senha)
+     * @throws UsernameNotFoundException se o usuário do token não existir mais
      */
-    public Optional<UserPrincipal> loadPrincipalByEmail(String email) {
+    public UserPrincipal loadPrincipalByEmail(String email) throws UsernameNotFoundException {
         return userRepository.findByEmailIgnoreCase(email)
-                .map(UserPrincipal::from);
+                .map(UserPrincipal::from)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
 }

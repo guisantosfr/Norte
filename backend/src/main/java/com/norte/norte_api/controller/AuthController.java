@@ -13,8 +13,6 @@ import com.norte.norte_api.dto.AuthResponseDTO;
 import com.norte.norte_api.dto.LoginRequestDTO;
 import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
-import com.norte.norte_api.exception.ResourceNotFoundException;
-import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.UserPrincipal;
 import com.norte.norte_api.service.AuthService;
 
@@ -38,11 +36,9 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserRepository userRepository;
 
-    public AuthController(AuthService authService, UserRepository userRepository) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -66,8 +62,6 @@ public class AuthController {
     @GetMapping("/me")
     @SecurityRequirement(name = "bearerAuth")
     public UserResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
-        return userRepository.findByEmailIgnoreCase(principal.getUsername())
-                .map(UserResponseDTO::from)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+        return authService.getCurrentUser(principal.getId());
     }
 }

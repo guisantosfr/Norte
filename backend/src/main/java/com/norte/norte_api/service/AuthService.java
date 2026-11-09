@@ -1,6 +1,7 @@
 package com.norte.norte_api.service;
 
 import java.util.Locale;
+import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,7 @@ import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
 import com.norte.norte_api.exception.DataIntegrityViolationInspector;
 import com.norte.norte_api.exception.DuplicateEmailException;
+import com.norte.norte_api.exception.ResourceNotFoundException;
 import com.norte.norte_api.models.UserModel;
 import com.norte.norte_api.repository.UserRepository;
 import com.norte.norte_api.security.JwtTokenProvider;
@@ -36,6 +38,7 @@ import jakarta.transaction.Transactional;
 public class AuthService {
 
     private static final String INVALID_CREDENTIALS_MSG = "Credenciais inválidas";
+    private static final String USER_NOT_FOUND_MSG = "Usuário não encontrado.";
     private static final String USERS_EMAIL_UNIQUE_INDEX = "uk_users_email";
 
     private final UserRepository userRepository;
@@ -116,6 +119,20 @@ public class AuthService {
         UserResponseDTO userResponse = UserResponseDTO.from(user);
 
         return AuthResponseDTO.of(token, userResponse);
+    }
+
+    /**
+     * Retorna os dados públicos do usuário autenticado.
+     *
+     * @param userId identificador vindo do {@code UserPrincipal} do contexto de
+     *               segurança — nunca de um parâmetro fornecido pelo cliente
+     * @return dados públicos do usuário
+     * @throws ResourceNotFoundException se o usuário não existir mais
+     */
+    public UserResponseDTO getCurrentUser(UUID userId) {
+        return userRepository.findById(userId)
+                .map(UserResponseDTO::from)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_MSG));
     }
 
     private static String normalizeEmail(String email) {

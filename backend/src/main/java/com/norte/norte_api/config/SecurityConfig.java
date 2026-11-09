@@ -28,6 +28,8 @@ import com.norte.norte_api.security.JwtAccessDeniedHandler;
 import com.norte.norte_api.security.JwtAuthenticationEntryPoint;
 import com.norte.norte_api.security.JwtAuthenticationFilter;
 
+import jakarta.servlet.DispatcherType;
+
 /**
  * Configuração central do Spring Security.
  *
@@ -101,6 +103,11 @@ public class SecurityConfig {
 
                 // ── Autorização ───────────────────────────────────────────────────────────
                 .authorizeHttpRequests(auth -> {
+                    // Libera o dispatch interno de erro (/error). Sem isso, uma exceção
+                    // real (ex.: banco indisponível) lançada em um filtro seria
+                    // reapresentada como 401, pois o dispatch de erro chega anônimo.
+                    auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+
                     auth.requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
 
