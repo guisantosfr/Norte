@@ -191,7 +191,7 @@ export class MainLayoutComponent {
 
   readonly navItems: NavItem[] = [
     { label: 'Visão Geral', route: '/dashboard', exact: true, available: true },
-    { label: 'Transações', route: '/transactions', available: false, sprintBadge: 'Sprint 2' },
+    { label: 'Transações', route: '/transactions', available: true },
     { label: 'Categorias', route: '/categories', available: false, sprintBadge: 'Sprint 3' },
     { label: 'Indicadores', route: '/financial', available: false, sprintBadge: 'Sprint 3' },
     { label: 'Recorrências', route: '/recurrences', available: false, sprintBadge: 'Sprint 4' },

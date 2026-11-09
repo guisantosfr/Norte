@@ -36,6 +36,14 @@ export const routes: Routes = [
             (m) => m.DashboardPageComponent
           ),
       },
+      {
+        path: 'transactions',
+        title: 'Transações — Norte',
+        loadComponent: () =>
+          import('./features/transactions/transactions-page.component').then(
+            (m) => m.TransactionsPageComponent
+          ),
+      },
     ],
   },
   {
