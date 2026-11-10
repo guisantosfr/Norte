@@ -1,14 +1,17 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { parseHttpError } from '../../core/http/api-error.model';
+import { CategoryResponseDTO } from '../../core/models/category.model';
 import {
   TransactionFilters,
   TransactionResponseDTO,
   TransactionStatus,
   TransactionType,
 } from '../../core/models/transaction.model';
+import { CategoryService } from '../../core/services/category.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ToastService } from '../../shared/services/toast.service';
@@ -33,7 +36,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
         <div>
           <h1 class="text-2xl font-bold text-text">Transações</h1>
           <p class="mt-1 text-sm text-text-secondary">
-            Registre e acompanhe suas entradas e despesas avulsas.
+            Registre, classifique por categoria e acompanhe suas entradas e despesas.
           </p>
         </div>
 
@@ -119,7 +122,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
 
       <!-- Barra de Filtros -->
       <section class="rounded-2xl border border-border bg-surface p-4 sm:p-5 shadow-xs">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end">
           <!-- Tipo -->
           <div>
             <label for="filter-type" class="block text-xs font-medium text-text-secondary mb-1">
@@ -152,6 +155,26 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               <option value="PENDING">Pendente</option>
               <option value="COMPLETED">Efetivado</option>
               <option value="CANCELED">Cancelado</option>
+            </select>
+          </div>
+
+          <!-- Categoria -->
+          <div>
+            <label for="filter-category" class="block text-xs font-medium text-text-secondary mb-1">
+              Categoria
+            </label>
+            <select
+              id="filter-category"
+              [(ngModel)]="filterCategoryId"
+              (ngModelChange)="applyFilters()"
+              class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
+            >
+              <option value="">Todas as categorias</option>
+              @for (cat of categories(); track cat.id) {
+                <option [value]="cat.id">
+                  {{ cat.name }}{{ !cat.active ? ' (Inativa)' : '' }}
+                </option>
+              }
             </select>
           </div>
 
@@ -280,7 +303,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               <thead>
                 <tr class="border-b border-border bg-background/60 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                   <th class="py-3.5 pl-5 pr-3">Data</th>
-                  <th class="px-3 py-3.5">Descrição</th>
+                  <th class="px-3 py-3.5">Descrição / Categoria</th>
                   <th class="px-3 py-3.5">Tipo</th>
                   <th class="px-3 py-3.5">Status</th>
                   <th class="px-3 py-3.5 text-right">Valor</th>
@@ -310,9 +333,15 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
 
                         @if (tx.categoryName) {
                           <span
-                            class="rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-text-secondary"
+                            class="rounded-md border border-support/30 bg-support/10 px-2 py-0.5 text-[11px] font-medium text-support"
                           >
                             {{ tx.categoryName }}
+                          </span>
+                        } @else {
+                          <span
+                            class="rounded-md border border-border bg-background px-2 py-0.5 text-[10px] text-text-muted"
+                          >
+                            Sem categoria
                           </span>
                         }
 
@@ -485,6 +514,14 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
+                @if (tx.categoryName) {
+                  <span
+                    class="rounded-md border border-support/30 bg-support/10 px-2 py-0.5 text-[11px] font-medium text-support"
+                  >
+                    {{ tx.categoryName }}
+                  </span>
+                }
+
                 @if (tx.type === 'INCOME') {
                   <span
                     class="rounded-md bg-income/15 px-2 py-0.5 text-[11px] font-semibold text-income"
@@ -568,6 +605,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
         [open]="formModalOpen()"
         [initialType]="formModalInitialType()"
         [editingTransaction]="editingTransaction()"
+        [categories]="categories()"
         (saved)="onTransactionSaved()"
         (closed)="closeFormModal()"
       />
@@ -596,15 +634,19 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
 })
 export class TransactionsPageComponent implements OnInit {
   private readonly transactionService = inject(TransactionService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
 
   readonly transactions = signal<TransactionResponseDTO[]>([]);
+  readonly categories = signal<CategoryResponseDTO[]>([]);
   readonly isLoading = signal(false);
   readonly filterError = signal<string | null>(null);
 
   // Filtros
   filterType: TransactionType | '' = '';
   filterStatus: TransactionStatus | '' = '';
+  filterCategoryId = '';
   filterStartDate = '';
   filterEndDate = '';
 
@@ -688,12 +730,22 @@ export class TransactionsPageComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    const queryCategoryId = this.route.snapshot.queryParamMap.get('categoryId');
+    if (queryCategoryId) {
+      this.filterCategoryId = queryCategoryId;
+    }
+
+    this.loadCategories();
     this.loadTransactions();
   }
 
   hasActiveFilters(): boolean {
     return Boolean(
-      this.filterType || this.filterStatus || this.filterStartDate || this.filterEndDate
+      this.filterType ||
+        this.filterStatus ||
+        this.filterCategoryId ||
+        this.filterStartDate ||
+        this.filterEndDate
     );
   }
 
@@ -715,16 +767,24 @@ export class TransactionsPageComponent implements OnInit {
   clearFilters(): void {
     this.filterType = '';
     this.filterStatus = '';
+    this.filterCategoryId = '';
     this.filterStartDate = '';
     this.filterEndDate = '';
     this.filterError.set(null);
     this.loadTransactions();
   }
 
+  loadCategories(): void {
+    this.categoryService.findAll().subscribe({
+      next: (list) => this.categories.set(list),
+    });
+  }
+
   loadTransactions(): void {
     const filters: TransactionFilters = {
       type: this.filterType,
       status: this.filterStatus,
+      categoryId: this.filterCategoryId,
       startDate: this.filterStartDate,
       endDate: this.filterEndDate,
     };
@@ -778,6 +838,7 @@ export class TransactionsPageComponent implements OnInit {
 
   onTransactionSaved(): void {
     this.closeFormModal();
+    this.loadCategories();
     this.loadTransactions();
   }
 

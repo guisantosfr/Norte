@@ -44,6 +44,22 @@ export const routes: Routes = [
             (m) => m.TransactionsPageComponent
           ),
       },
+      {
+        path: 'categories',
+        title: 'Categorias — Norte',
+        loadComponent: () =>
+          import('./features/categories/categories-page.component').then(
+            (m) => m.CategoriesPageComponent
+          ),
+      },
+      {
+        path: 'financial',
+        title: 'Indicadores Financeiros — Norte',
+        loadComponent: () =>
+          import('./features/financial/financial-page.component').then(
+            (m) => m.FinancialPageComponent
+          ),
+      },
     ],
   },
   {

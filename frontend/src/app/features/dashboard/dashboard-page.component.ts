@@ -1,10 +1,10 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { TransactionResponseDTO } from '../../core/models/transaction.model';
-import { TransactionService } from '../../core/services/transaction.service';
+import { FinancialSummaryDTO } from '../../core/models/financial.model';
+import { FinancialService } from '../../core/services/financial.service';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
@@ -26,7 +26,7 @@ import { ToastService } from '../../shared/services/toast.service';
             Bem-vindo(a) ao Norte, {{ authService.currentUser()?.name }}!
           </h1>
           <p class="mt-1 text-sm text-text-secondary">
-            Acompanhe seus lançamentos e gerencie suas entradas e despesas.
+            Acompanhe seus lançamentos, categorias e indicadores financeiros.
           </p>
         </div>
 
@@ -35,81 +35,80 @@ import { ToastService } from '../../shared/services/toast.service';
             routerLink="/transactions"
             class="inline-flex items-center gap-2 rounded-xl bg-support px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
           >
-            <span>Gerenciar Transações</span>
-            <span>→</span>
+            <span>Transações</span>
           </a>
 
-          <button
-            type="button"
-            (click)="refreshProfile()"
-            [disabled]="isRefreshing()"
-            class="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:bg-background disabled:opacity-60 transition-colors cursor-pointer"
+          <a
+            routerLink="/categories"
+            class="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:bg-background transition-colors"
           >
-            @if (isRefreshing()) {
-              <span
-                class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-support border-t-transparent"
-              ></span>
-              <span>Sincronizando...</span>
-            } @else {
-              <span>Sincronizar perfil</span>
-            }
-          </button>
+            <span>Categorias</span>
+          </a>
+
+          <a
+            routerLink="/financial"
+            class="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:bg-background transition-colors"
+          >
+            <span>Indicadores</span>
+          </a>
         </div>
       </div>
 
-      <!-- Cards Semânticos Conectados às Transações -->
+      <!-- Cards Conectados ao FinancialService (/financial/summary) -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="rounded-2xl border border-border bg-surface p-5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text-secondary">Entradas Efetivadas</span>
-            <span class="h-2.5 w-2.5 rounded-full bg-income"></span>
+            <span class="text-xs font-medium text-text-secondary">Saldo Atual Realizado</span>
+            <span class="h-2.5 w-2.5 rounded-full bg-support"></span>
           </div>
-          <p class="mt-2 text-lg font-bold text-income">
-            {{ overview().realizedIncome | currency: 'BRL' }}
+          <p
+            class="mt-2 text-lg font-bold"
+            [class.text-income]="(summary()?.currentBalance ?? 0) >= 0"
+            [class.text-expense]="(summary()?.currentBalance ?? 0) < 0"
+          >
+            {{ (summary()?.currentBalance ?? 0) | currency: 'BRL' }}
           </p>
-          <p class="mt-1 text-xs text-text-muted">
-            Previsto pendente: {{ overview().pendingIncome | currency: 'BRL' }}
-          </p>
+          <p class="mt-1 text-xs text-text-muted">Caixa acumulado realizado</p>
         </div>
 
         <div class="rounded-2xl border border-border bg-surface p-5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text-secondary">Despesas Efetivadas</span>
-            <span class="h-2.5 w-2.5 rounded-full bg-expense"></span>
-          </div>
-          <p class="mt-2 text-lg font-bold text-expense">
-            {{ overview().realizedExpense | currency: 'BRL' }}
-          </p>
-          <p class="mt-1 text-xs text-text-muted">
-            Previsto pendente: {{ overview().pendingExpense | currency: 'BRL' }}
-          </p>
-        </div>
-
-        <div class="rounded-2xl border border-border bg-surface p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text-secondary">Pendências</span>
-            <span class="h-2.5 w-2.5 rounded-full bg-pending"></span>
-          </div>
-          <p class="mt-2 text-lg font-bold text-pending">
-            {{ overview().pendingCount }} compromisso(s)
-          </p>
-          <p class="mt-1 text-xs text-text-muted">Aguardando efetivação</p>
-        </div>
-
-        <div class="rounded-2xl border border-border bg-surface p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text-secondary">Resultado Realizado</span>
+            <span class="text-xs font-medium text-text-secondary">Saldo Projetado</span>
             <span class="h-2.5 w-2.5 rounded-full bg-info"></span>
           </div>
           <p
             class="mt-2 text-lg font-bold"
-            [class.text-income]="overview().netRealized >= 0"
-            [class.text-expense]="overview().netRealized < 0"
+            [class.text-income]="(summary()?.projectedBalance ?? 0) >= 0"
+            [class.text-expense]="(summary()?.projectedBalance ?? 0) < 0"
           >
-            {{ overview().netRealized | currency: 'BRL' }}
+            {{ (summary()?.projectedBalance ?? 0) | currency: 'BRL' }}
+          </p>
+          <p class="mt-1 text-xs text-text-muted">Inclui entradas e despesas pendentes</p>
+        </div>
+
+        <div class="rounded-2xl border border-border bg-surface p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-text-secondary">Entradas Realizadas</span>
+            <span class="h-2.5 w-2.5 rounded-full bg-income"></span>
+          </div>
+          <p class="mt-2 text-lg font-bold text-income">
+            {{ (summary()?.realizedIncome ?? 0) | currency: 'BRL' }}
           </p>
           <p class="mt-1 text-xs text-text-muted">
-            {{ transactions().length }} lançamento(s) registrado(s)
+            Pendente: {{ (summary()?.pendingIncome ?? 0) | currency: 'BRL' }}
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-border bg-surface p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-text-secondary">Despesas Realizadas</span>
+            <span class="h-2.5 w-2.5 rounded-full bg-expense"></span>
+          </div>
+          <p class="mt-2 text-lg font-bold text-expense">
+            {{ (summary()?.realizedExpense ?? 0) | currency: 'BRL' }}
+          </p>
+          <p class="mt-1 text-xs text-text-muted">
+            Pendente: {{ (summary()?.pendingExpense ?? 0) | currency: 'BRL' }}
           </p>
         </div>
       </section>
@@ -117,9 +116,20 @@ import { ToastService } from '../../shared/services/toast.service';
       <!-- Card com Dados do Usuário Autenticado -->
       @if (authService.currentUser(); as user) {
         <section class="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-          <h2 class="text-base font-semibold text-text mb-4">
-            Dados da Conta Autenticada
-          </h2>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-text">
+              Dados da Conta Autenticada
+            </h2>
+
+            <button
+              type="button"
+              (click)="refreshProfile()"
+              [disabled]="isRefreshing()"
+              class="text-xs font-semibold text-support hover:underline disabled:opacity-60 cursor-pointer"
+            >
+              {{ isRefreshing() ? 'Sincronizando...' : 'Sincronizar (/auth/me)' }}
+            </button>
+          </div>
 
           <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="rounded-xl border border-border bg-background p-4">
@@ -153,56 +163,18 @@ import { ToastService } from '../../shared/services/toast.service';
 })
 export class DashboardPageComponent implements OnInit {
   readonly authService = inject(AuthService);
-  private readonly transactionService = inject(TransactionService);
+  private readonly financialService = inject(FinancialService);
   private readonly toastService = inject(ToastService);
 
   readonly isRefreshing = signal(false);
-  readonly transactions = signal<TransactionResponseDTO[]>([]);
-
-  readonly overview = computed(() => {
-    let realizedIncome = 0;
-    let realizedExpense = 0;
-    let pendingIncome = 0;
-    let pendingExpense = 0;
-    let pendingCount = 0;
-
-    for (const tx of this.transactions()) {
-      if (tx.status === 'CANCELED') {
-        continue;
-      }
-      if (tx.status === 'COMPLETED') {
-        const val = tx.realizedAmount ?? tx.amount;
-        if (tx.type === 'INCOME') {
-          realizedIncome += val;
-        } else {
-          realizedExpense += val;
-        }
-      } else if (tx.status === 'PENDING') {
-        pendingCount++;
-        if (tx.type === 'INCOME') {
-          pendingIncome += tx.amount;
-        } else {
-          pendingExpense += tx.amount;
-        }
-      }
-    }
-
-    return {
-      realizedIncome,
-      realizedExpense,
-      pendingIncome,
-      pendingExpense,
-      pendingCount,
-      netRealized: realizedIncome - realizedExpense,
-    };
-  });
+  readonly summary = signal<FinancialSummaryDTO | null>(null);
 
   ngOnInit(): void {
     if (!this.authService.currentUser()) {
       this.refreshProfile(false);
     }
-    this.transactionService.findAll().subscribe({
-      next: (list) => this.transactions.set(list),
+    this.financialService.getSummary().subscribe({
+      next: (res) => this.summary.set(res),
     });
   }
 

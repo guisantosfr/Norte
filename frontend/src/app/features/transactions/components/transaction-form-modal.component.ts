@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { parseHttpError } from '../../../core/http/api-error.model';
+import { CategoryResponseDTO } from '../../../core/models/category.model';
 import {
   TransactionRequestDTO,
   TransactionResponseDTO,
@@ -36,8 +37,8 @@ import { ToastService } from '../../../shared/services/toast.service';
               <p class="mt-0.5 text-xs text-text-secondary">
                 {{
                   isEditMode()
-                    ? 'Atualize os dados do lançamento financeiro selecionado.'
-                    : 'Preencha os campos abaixo para registrar a movimentação.'
+                    ? 'Atualize os dados e a classificação do lançamento selecionado.'
+                    : 'Preencha os campos abaixo para registrar e classificar a movimentação.'
                 }}
               </p>
             </div>
@@ -160,6 +161,61 @@ import { ToastService } from '../../../shared/services/toast.service';
               </div>
             </div>
 
+            <!-- Categoria (Seleção existente ou Criação Inline) -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label
+                  [for]="useNewCategory() ? 'tx-category-name' : 'tx-category-id'"
+                  class="block text-sm font-medium text-text"
+                >
+                  Categoria
+                </label>
+                <button
+                  type="button"
+                  (click)="toggleCategoryMode()"
+                  class="text-xs font-semibold text-support hover:underline cursor-pointer"
+                >
+                  {{
+                    useNewCategory()
+                      ? 'Selecionar categoria existente'
+                      : '+ Criar nova categoria'
+                  }}
+                </button>
+              </div>
+
+              @if (useNewCategory()) {
+                <input
+                  id="tx-category-name"
+                  type="text"
+                  formControlName="categoryName"
+                  placeholder="Digite o nome da nova categoria (máx. 100 caracteres)"
+                  class="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
+                  [class.border-expense]="hasFieldError('categoryName')"
+                  [class.border-border]="!hasFieldError('categoryName')"
+                />
+                @if (getFieldError('categoryName'); as error) {
+                  <p class="mt-1 text-xs text-expense">{{ error }}</p>
+                } @else {
+                  <p class="mt-1 text-[11px] text-text-muted">
+                    A nova categoria será criada automaticamente ao salvar este lançamento.
+                  </p>
+                }
+              } @else {
+                <select
+                  id="tx-category-id"
+                  formControlName="categoryId"
+                  class="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-support transition-colors"
+                >
+                  <option value="">Sem categoria</option>
+                  @for (cat of selectableCategories(); track cat.id) {
+                    <option [value]="cat.id">
+                      {{ cat.name }}{{ !cat.active ? ' (Inativa - atual)' : '' }}
+                    </option>
+                  }
+                </select>
+              }
+            </div>
+
             <!-- Status -->
             <div>
               <label for="tx-status" class="block text-sm font-medium text-text mb-1.5">
@@ -245,6 +301,7 @@ export class TransactionFormModalComponent {
   readonly open = input<boolean>(false);
   readonly initialType = input<TransactionType>('EXPENSE');
   readonly editingTransaction = input<TransactionResponseDTO | null>(null);
+  readonly categories = input<CategoryResponseDTO[]>([]);
 
   readonly saved = output<TransactionResponseDTO>();
   readonly closed = output<void>();
@@ -252,8 +309,15 @@ export class TransactionFormModalComponent {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly serverFieldErrors = signal<Record<string, string>>({});
+  readonly useNewCategory = signal(false);
 
   readonly isEditMode = computed(() => Boolean(this.editingTransaction()));
+
+  readonly selectableCategories = computed(() => {
+    const all = this.categories();
+    const editing = this.editingTransaction();
+    return all.filter((cat) => cat.active || (editing && editing.categoryId === cat.id));
+  });
 
   readonly modalTitle = computed(() => {
     const editing = this.editingTransaction();
@@ -274,6 +338,8 @@ export class TransactionFormModalComponent {
       Validators.min(0.01),
     ]),
     date: this.fb.nonNullable.control(this.getTodayIsoDate(), [Validators.required]),
+    categoryId: this.fb.nonNullable.control(''),
+    categoryName: this.fb.nonNullable.control('', [Validators.maxLength(100)]),
     status: this.fb.nonNullable.control<TransactionStatus>('COMPLETED', [Validators.required]),
     realizedAmount: this.fb.control<number | null>(null, [Validators.min(0.01)]),
   });
@@ -290,6 +356,7 @@ export class TransactionFormModalComponent {
 
       this.errorMessage.set(null);
       this.serverFieldErrors.set({});
+      this.useNewCategory.set(false);
 
       if (editing) {
         this.form.reset({
@@ -297,11 +364,10 @@ export class TransactionFormModalComponent {
           description: editing.description,
           amount: editing.amount,
           date: editing.date,
+          categoryId: editing.categoryId ?? '',
+          categoryName: '',
           status: editing.status,
-          realizedAmount:
-            editing.realizedAmount !== null && editing.realizedAmount !== editing.amount
-              ? editing.realizedAmount
-              : editing.realizedAmount,
+          realizedAmount: editing.realizedAmount,
         });
       } else {
         const defaultStatus: TransactionStatus =
@@ -311,6 +377,8 @@ export class TransactionFormModalComponent {
           description: '',
           amount: null,
           date: this.getTodayIsoDate(),
+          categoryId: '',
+          categoryName: '',
           status: defaultStatus,
           realizedAmount: null,
         });
@@ -325,8 +393,20 @@ export class TransactionFormModalComponent {
     }
   }
 
+  toggleCategoryMode(): void {
+    this.useNewCategory.update((val) => {
+      const next = !val;
+      if (next) {
+        this.form.controls.categoryId.setValue('');
+      } else {
+        this.form.controls.categoryName.setValue('');
+      }
+      return next;
+    });
+  }
+
   hasFieldError(
-    field: 'description' | 'amount' | 'date' | 'status' | 'realizedAmount'
+    field: 'description' | 'amount' | 'date' | 'status' | 'realizedAmount' | 'categoryName'
   ): boolean {
     const control = this.form.controls[field];
     return Boolean(
@@ -336,7 +416,7 @@ export class TransactionFormModalComponent {
   }
 
   getFieldError(
-    field: 'description' | 'amount' | 'date' | 'status' | 'realizedAmount'
+    field: 'description' | 'amount' | 'date' | 'status' | 'realizedAmount' | 'categoryName'
   ): string | null {
     const serverError = this.serverFieldErrors()[field];
     if (serverError) {
@@ -362,7 +442,9 @@ export class TransactionFormModalComponent {
     }
 
     if (control.hasError('maxlength')) {
-      return 'A descrição deve ter no máximo 255 caracteres';
+      return field === 'categoryName'
+        ? 'O nome da categoria deve ter no máximo 100 caracteres'
+        : 'A descrição deve ter no máximo 255 caracteres';
     }
 
     if (control.hasError('min')) {
@@ -401,6 +483,12 @@ export class TransactionFormModalComponent {
         ? Number(raw.realizedAmount)
         : null;
 
+    const categoryNameTrimmed = this.useNewCategory() ? raw.categoryName.trim() : '';
+    const categoryId =
+      !this.useNewCategory() && raw.categoryId ? raw.categoryId : null;
+    const categoryName =
+      this.useNewCategory() && categoryNameTrimmed ? categoryNameTrimmed : null;
+
     const editing = this.editingTransaction();
     this.isSubmitting.set(true);
 
@@ -413,7 +501,8 @@ export class TransactionFormModalComponent {
         status: raw.status,
         realizedAmount,
         realizedAt: raw.status === 'COMPLETED' ? editing.realizedAt : null,
-        categoryId: editing.categoryId,
+        categoryId,
+        categoryName,
       };
 
       this.transactionService
@@ -439,6 +528,8 @@ export class TransactionFormModalComponent {
       date: raw.date,
       status: raw.status,
       realizedAmount,
+      categoryId,
+      categoryName,
     };
 
     const request$ =
