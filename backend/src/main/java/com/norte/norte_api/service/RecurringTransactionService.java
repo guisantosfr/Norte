@@ -1,5 +1,6 @@
 package com.norte.norte_api.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -40,20 +41,23 @@ public class RecurringTransactionService {
     private final RecurringTransactionRepository recurringTransactionRepository;
     private final TransactionRepository transactionRepository;
     private final CategoryService categoryService;
+    private final Clock clock;
 
     public RecurringTransactionService(
             RecurringTransactionRepository recurringTransactionRepository,
             TransactionRepository transactionRepository,
-            CategoryService categoryService
+            CategoryService categoryService,
+            Clock clock
     ) {
         this.recurringTransactionRepository = recurringTransactionRepository;
         this.transactionRepository = transactionRepository;
         this.categoryService = categoryService;
+        this.clock = clock;
     }
 
     @Transactional
     public RecurringTransactionResponseDTO create(UUID userId, RecurringTransactionRequestDTO dto) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate effectiveStartDate = RecurrenceScheduleCalculator.resolveEffectiveStartDate(dto.startDate(), today);
         RecurrenceFrequency frequency = dto.frequency() != null ? dto.frequency() : RecurrenceFrequency.MONTHLY;
 
@@ -168,7 +172,7 @@ public class RecurringTransactionService {
         List<TransactionModel> seriesTransactions = transactionRepository
                 .findAllByRecurringTransaction_IdAndUserIdOrderByOccurrenceNumberAsc(recurringId, userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         if (dto.occurrences() != null) {
             int maxProtectedOccurrence = seriesTransactions.stream()
@@ -260,7 +264,7 @@ public class RecurringTransactionService {
         List<TransactionModel> seriesTransactions = transactionRepository
                 .findAllByRecurringTransaction_IdAndUserIdOrderByOccurrenceNumberAsc(recurringId, userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         List<TransactionModel> toDelete = seriesTransactions.stream()
                 .filter(tx -> isEligibleForScope(tx, scope, today))

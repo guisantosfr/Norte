@@ -22,7 +22,7 @@ public class NotificationScheduler {
 
     public NotificationScheduler(
             NotificationGeneratorService generatorService,
-            @Value("${notifications.reminder.zone:America/Sao_Paulo}") String zone,
+            @Value("${notifications.reminder.zone:${app.timezone:America/Sao_Paulo}}") String zone,
             @Value("${notifications.reminder.run-on-startup:true}") boolean runOnStartup
     ) {
         this.generatorService = generatorService;
@@ -32,7 +32,7 @@ public class NotificationScheduler {
 
     @Scheduled(
             cron = "${notifications.reminder.cron:0 0 6 * * *}",
-            zone = "${notifications.reminder.zone:America/Sao_Paulo}"
+            zone = "${notifications.reminder.zone:${app.timezone:America/Sao_Paulo}}"
     )
     public void runDailyReminders() {
         executeGeneration("cron diário");

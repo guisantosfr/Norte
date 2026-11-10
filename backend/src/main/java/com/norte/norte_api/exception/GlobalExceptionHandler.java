@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.core.MethodParameter;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -305,6 +306,35 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     // ─── 500 Internal Server Error ───────────────────────────────────────────────
+
+    /**
+     * Violações de integridade do banco de dados (NOT NULL, FOREIGN KEY, CHECK,
+     * ou constraints UNIQUE não tratadas nas regras de negócio).
+     *
+     * <p>Mantidas explicitamente como erro interno (HTTP 500) para não mascarar bugs
+     * ou problemas estruturais como se fossem conflitos de negócio (409). Registra a
+     * causa específica e o ID de correlação para rastreabilidade sem vazar SQL ou
+     * esquemas internos ao cliente.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+
+        String correlationId = UUID.randomUUID().toString();
+        Throwable specificCause = ex.getMostSpecificCause();
+        String rootMessage = specificCause != null ? specificCause.getMessage() : ex.getMessage();
+
+        log.error("[{}] Violação de integridade de dados não tratada (erro interno) em {} {}: {}",
+                correlationId,
+                request.getMethod(),
+                request.getRequestURI(),
+                rootMessage,
+                ex);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiErrorResponse.internalError(request.getRequestURI(), correlationId));
+    }
 
     /**
      * Qualquer exceção não tratada explicitamente.
