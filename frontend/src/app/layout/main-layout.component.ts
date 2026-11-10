@@ -194,7 +194,7 @@ export class MainLayoutComponent {
     { label: 'Transações', route: '/transactions', available: true },
     { label: 'Categorias', route: '/categories', available: true },
     { label: 'Indicadores', route: '/financial', available: true },
-    { label: 'Recorrências', route: '/recurrences', available: false, sprintBadge: 'Sprint 4' },
+    { label: 'Recorrências', route: '/recurrences', available: true },
     { label: 'Lembretes', route: '/notifications', available: false, sprintBadge: 'Sprint 6' },
     { label: 'Anotações', route: '/notes', available: false, sprintBadge: 'Sprint 6' },
   ];

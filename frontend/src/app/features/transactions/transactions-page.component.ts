@@ -647,6 +647,7 @@ export class TransactionsPageComponent implements OnInit {
   filterType: TransactionType | '' = '';
   filterStatus: TransactionStatus | '' = '';
   filterCategoryId = '';
+  filterRecurringTransactionId = '';
   filterStartDate = '';
   filterEndDate = '';
 
@@ -735,6 +736,11 @@ export class TransactionsPageComponent implements OnInit {
       this.filterCategoryId = queryCategoryId;
     }
 
+    const queryRecurringId = this.route.snapshot.queryParamMap.get('recurringTransactionId');
+    if (queryRecurringId) {
+      this.filterRecurringTransactionId = queryRecurringId;
+    }
+
     this.loadCategories();
     this.loadTransactions();
   }
@@ -744,6 +750,7 @@ export class TransactionsPageComponent implements OnInit {
       this.filterType ||
         this.filterStatus ||
         this.filterCategoryId ||
+        this.filterRecurringTransactionId ||
         this.filterStartDate ||
         this.filterEndDate
     );
@@ -768,6 +775,7 @@ export class TransactionsPageComponent implements OnInit {
     this.filterType = '';
     this.filterStatus = '';
     this.filterCategoryId = '';
+    this.filterRecurringTransactionId = '';
     this.filterStartDate = '';
     this.filterEndDate = '';
     this.filterError.set(null);
@@ -785,6 +793,7 @@ export class TransactionsPageComponent implements OnInit {
       type: this.filterType,
       status: this.filterStatus,
       categoryId: this.filterCategoryId,
+      recurringTransactionId: this.filterRecurringTransactionId,
       startDate: this.filterStartDate,
       endDate: this.filterEndDate,
     };

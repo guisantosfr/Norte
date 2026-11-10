@@ -60,6 +60,14 @@ export const routes: Routes = [
             (m) => m.FinancialPageComponent
           ),
       },
+      {
+        path: 'recurrences',
+        title: 'Recorrências e Parcelamentos — Norte',
+        loadComponent: () =>
+          import('./features/recurrences/recurrences-page.component').then(
+            (m) => m.RecurrencesPageComponent
+          ),
+      },
     ],
   },
   {
