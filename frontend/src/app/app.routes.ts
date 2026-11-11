@@ -68,6 +68,22 @@ export const routes: Routes = [
             (m) => m.RecurrencesPageComponent
           ),
       },
+      {
+        path: 'notifications',
+        title: 'Lembretes — Norte',
+        loadComponent: () =>
+          import('./features/notifications/notifications-page.component').then(
+            (m) => m.NotificationsPageComponent
+          ),
+      },
+      {
+        path: 'notes',
+        title: 'Anotações Pessoais — Norte',
+        loadComponent: () =>
+          import('./features/notes/notes-page.component').then(
+            (m) => m.NotesPageComponent
+          ),
+      },
     ],
   },
   {

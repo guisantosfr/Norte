@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
+import { NotificationService } from '../core/services/notification.service';
 import { ThemeToggleComponent } from '../shared/components/theme-toggle.component';
 import { ToastService } from '../shared/services/toast.service';
+import { NotificationBellComponent } from './components/notification-bell.component';
 
 interface NavItem {
   label: string;
@@ -15,7 +17,13 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggleComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ThemeToggleComponent,
+    NotificationBellComponent,
+  ],
   template: `
     <div class="min-h-screen flex flex-col lg:flex-row bg-background text-text">
       <!-- Mobile Header -->
@@ -44,6 +52,7 @@ interface NavItem {
         </div>
 
         <div class="flex items-center gap-2">
+          <app-notification-bell />
           <app-theme-toggle />
         </div>
       </header>
@@ -111,6 +120,13 @@ interface NavItem {
                 class="flex items-center justify-between rounded-xl border border-transparent px-3.5 py-2.5 text-sm text-text-secondary hover:bg-background hover:text-text transition-colors"
               >
                 <span>{{ item.label }}</span>
+                @if (item.route === '/notifications' && notificationService.unreadCount() > 0) {
+                  <span
+                    class="rounded-full bg-expense px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  >
+                    {{ notificationService.unreadCount() }}
+                  </span>
+                }
               </a>
             } @else {
               <div
@@ -171,6 +187,7 @@ interface NavItem {
           </div>
 
           <div class="flex items-center gap-3">
+            <app-notification-bell />
             <app-theme-toggle />
           </div>
         </header>
@@ -185,6 +202,7 @@ interface NavItem {
 })
 export class MainLayoutComponent {
   readonly authService = inject(AuthService);
+  readonly notificationService = inject(NotificationService);
   private readonly toastService = inject(ToastService);
 
   readonly mobileMenuOpen = signal(false);
@@ -195,8 +213,8 @@ export class MainLayoutComponent {
     { label: 'Categorias', route: '/categories', available: true },
     { label: 'Indicadores', route: '/financial', available: true },
     { label: 'Recorrências', route: '/recurrences', available: true },
-    { label: 'Lembretes', route: '/notifications', available: false, sprintBadge: 'Sprint 6' },
-    { label: 'Anotações', route: '/notes', available: false, sprintBadge: 'Sprint 6' },
+    { label: 'Lembretes', route: '/notifications', available: true },
+    { label: 'Anotações', route: '/notes', available: true },
   ];
 
   readonly userInitials = computed(() => {
