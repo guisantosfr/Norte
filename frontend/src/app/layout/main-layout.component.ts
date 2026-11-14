@@ -1,5 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  LucideArrowLeftRight,
+  LucideBell,
+  LucideChartPie,
+  LucideDynamicIcon,
+  LucideIcon,
+  LucideLayoutDashboard,
+  LucideLogOut,
+  LucideRepeat,
+  LucideStickyNote,
+  LucideTags,
+} from '@lucide/angular';
 import { AuthService } from '../core/auth/auth.service';
 import { NotificationService } from '../core/services/notification.service';
 import { ThemeToggleComponent } from '../shared/components/theme-toggle.component';
@@ -9,6 +21,7 @@ import { NotificationBellComponent } from './components/notification-bell.compon
 interface NavItem {
   label: string;
   route: string;
+  icon: LucideIcon;
   exact?: boolean;
   available: boolean;
   sprintBadge?: string;
@@ -21,6 +34,8 @@ interface NavItem {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    LucideDynamicIcon,
+    LucideLogOut,
     ThemeToggleComponent,
     NotificationBellComponent,
   ],
@@ -118,7 +133,10 @@ interface NavItem {
               (click)="closeMobileMenu()"
               class="flex items-center justify-between rounded-xl border border-transparent px-3.5 py-2.5 text-sm text-text hover:bg-support/40 transition-colors"
             >
-              <span>{{ item.label }}</span>
+              <div class="flex items-center gap-3">
+                <svg [lucideIcon]="item.icon" [size]="18" class="shrink-0" />
+                <span>{{ item.label }}</span>
+              </div>
               @if (item.route === '/notifications' && notificationService.unreadCount() > 0) {
                 <span
                   class="rounded-full bg-expense px-1.5 py-0.5 text-[10px] font-bold text-white"
@@ -153,6 +171,7 @@ interface NavItem {
             (click)="onLogout()"
             class="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-text-secondary hover:border-expense/40 hover:bg-expense/10 hover:text-expense transition-colors cursor-pointer"
           >
+            <svg lucideLogOut [size]="15" class="shrink-0" />
             <span>Sair da conta</span>
           </button>
         </div>
@@ -192,13 +211,19 @@ export class MainLayoutComponent {
   readonly mobileMenuOpen = signal(false);
 
   readonly navItems: NavItem[] = [
-    { label: 'Visão Geral', route: '/dashboard', exact: true, available: true },
-    { label: 'Transações', route: '/transactions', available: true },
-    { label: 'Categorias', route: '/categories', available: true },
-    { label: 'Indicadores', route: '/financial', available: true },
-    { label: 'Recorrências', route: '/recurrences', available: true },
-    { label: 'Lembretes', route: '/notifications', available: true },
-    { label: 'Anotações', route: '/notes', available: true },
+    {
+      label: 'Visão Geral',
+      route: '/dashboard',
+      icon: LucideLayoutDashboard,
+      exact: true,
+      available: true,
+    },
+    { label: 'Transações', route: '/transactions', icon: LucideArrowLeftRight, available: true },
+    { label: 'Categorias', route: '/categories', icon: LucideTags, available: true },
+    { label: 'Indicadores', route: '/financial', icon: LucideChartPie, available: true },
+    { label: 'Recorrências', route: '/recurrences', icon: LucideRepeat, available: true },
+    { label: 'Lembretes', route: '/notifications', icon: LucideBell, available: true },
+    { label: 'Anotações', route: '/notes', icon: LucideStickyNote, available: true },
   ];
 
   readonly userInitials = computed(() => {
