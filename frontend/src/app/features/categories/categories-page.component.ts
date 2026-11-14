@@ -49,7 +49,7 @@ import { CategoryReportModalComponent } from '../financial/components/category-r
             type="button"
             (click)="setStatusFilter('all')"
             class="rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-primary]="statusFilter() === 'all'"
+            [class.bg-support]="statusFilter() === 'all'"
             [class.text-white]="statusFilter() === 'all'"
             [class.bg-background]="statusFilter() !== 'all'"
             [class.text-text-secondary]="statusFilter() !== 'all'"
@@ -61,7 +61,7 @@ import { CategoryReportModalComponent } from '../financial/components/category-r
             type="button"
             (click)="setStatusFilter('active')"
             class="rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-income]="statusFilter() === 'active'"
+            [class.bg-support]="statusFilter() === 'active'"
             [class.text-white]="statusFilter() === 'active'"
             [class.bg-background]="statusFilter() !== 'active'"
             [class.text-text-secondary]="statusFilter() !== 'active'"
@@ -73,7 +73,7 @@ import { CategoryReportModalComponent } from '../financial/components/category-r
             type="button"
             (click)="setStatusFilter('inactive')"
             class="rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-cancelled]="statusFilter() === 'inactive'"
+            [class.bg-support]="statusFilter() === 'inactive'"
             [class.text-white]="statusFilter() === 'inactive'"
             [class.bg-background]="statusFilter() !== 'inactive'"
             [class.text-text-secondary]="statusFilter() !== 'inactive'"
@@ -81,10 +81,6 @@ import { CategoryReportModalComponent } from '../financial/components/category-r
             Inativas ({{ counts().inactive }})
           </button>
         </div>
-
-        <p class="text-xs text-text-muted">
-          Categorias vinculadas a lançamentos são inativadas ao excluir, preservando seu histórico financeiro.
-        </p>
       </div>
 
       <!-- Listagem de Categorias -->
@@ -111,16 +107,6 @@ import { CategoryReportModalComponent } from '../financial/components/category-r
           <h2 class="mt-4 text-base font-bold text-text">
             Nenhuma categoria encontrada
           </h2>
-          <p class="mt-1 max-w-md text-xs text-text-secondary">
-            Crie categorias como Moradia, Alimentação, Transporte ou Salário para classificar suas movimentações.
-          </p>
-          <button
-            type="button"
-            (click)="openCreateModal()"
-            class="mt-5 rounded-xl bg-support px-4 py-2 text-xs font-semibold text-white hover:opacity-95 transition-opacity cursor-pointer"
-          >
-            + Criar primeira categoria
-          </button>
         </div>
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

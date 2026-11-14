@@ -15,7 +15,7 @@ export interface ToastMessage {
 export class ToastService {
   readonly toasts = signal<ToastMessage[]>([]);
 
-  show(message: string, type: ToastType = 'info', title?: string, durationMs = 4500): void {
+  show(message: string, type: ToastType = 'info', title?: string, durationMs = 3000): void {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const toast: ToastMessage = { id, type, title, message };
 

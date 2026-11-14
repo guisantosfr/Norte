@@ -52,9 +52,6 @@ import { maxUtf8BytesValidator } from '../../../shared/validators/auth.validator
         >
           <div class="mb-6 text-center">
             <h1 class="text-2xl font-bold text-text">Acessar sua conta</h1>
-            <p class="mt-1.5 text-sm text-text-secondary">
-              Informe suas credenciais para acompanhar sua vida financeira.
-            </p>
           </div>
 
           @if (errorMessage()) {
@@ -142,7 +139,7 @@ import { maxUtf8BytesValidator } from '../../../shared/validators/auth.validator
               routerLink="/register"
               class="ml-1 font-semibold text-support hover:underline"
             >
-              Criar conta gratuitamente
+              Cadastre-se
             </a>
           </div>
         </div>
@@ -175,7 +172,7 @@ export class LoginComponent {
     const control = this.loginForm.controls[controlName];
     return Boolean(
       (control.invalid && (control.dirty || control.touched)) ||
-        this.serverFieldErrors()[controlName]
+      this.serverFieldErrors()[controlName]
     );
   }
 

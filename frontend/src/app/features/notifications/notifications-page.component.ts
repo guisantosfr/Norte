@@ -90,30 +90,6 @@ type StatusFilter = 'ALL' | NotificationStatus;
         </div>
       </div>
 
-      <!-- Info Banner -->
-      <div
-        class="rounded-2xl border border-info/25 bg-info/5 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-      >
-        <div class="flex items-start gap-3">
-          <span
-            class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-info/15 text-xs font-bold text-info"
-          >
-            i
-          </span>
-          <p class="text-xs text-text-secondary leading-relaxed">
-            O Norte verifica automaticamente seus lançamentos com status
-            <strong class="font-semibold text-text">Pendente</strong> e gera lembretes na véspera
-            do vencimento para evitar esquecimentos e juros.
-          </p>
-        </div>
-        <a
-          routerLink="/transactions"
-          class="shrink-0 text-xs font-semibold text-support hover:underline"
-        >
-          Gerenciar lançamentos →
-        </a>
-      </div>
-
       <!-- Filter Tabs -->
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div class="inline-flex rounded-xl border border-border bg-surface p-1">
@@ -121,7 +97,7 @@ type StatusFilter = 'ALL' | NotificationStatus;
             type="button"
             (click)="setStatusFilter('ALL')"
             class="rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-primary]="statusFilter() === 'ALL'"
+            [class.bg-support]="statusFilter() === 'ALL'"
             [class.text-white]="statusFilter() === 'ALL'"
             [class.text-text-secondary]="statusFilter() !== 'ALL'"
           >
@@ -131,7 +107,7 @@ type StatusFilter = 'ALL' | NotificationStatus;
             type="button"
             (click)="setStatusFilter('UNREAD')"
             class="rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-primary]="statusFilter() === 'UNREAD'"
+            [class.bg-support]="statusFilter() === 'UNREAD'"
             [class.text-white]="statusFilter() === 'UNREAD'"
             [class.text-text-secondary]="statusFilter() !== 'UNREAD'"
           >
@@ -141,7 +117,7 @@ type StatusFilter = 'ALL' | NotificationStatus;
             type="button"
             (click)="setStatusFilter('READ')"
             class="rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            [class.bg-primary]="statusFilter() === 'READ'"
+            [class.bg-support]="statusFilter() === 'READ'"
             [class.text-white]="statusFilter() === 'READ'"
             [class.text-text-secondary]="statusFilter() !== 'READ'"
           >

@@ -68,7 +68,7 @@ interface NavItem {
 
       <!-- Sidebar -->
       <aside
-        class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform duration-200 lg:static lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-border bg-surface transition-transform duration-200 lg:static lg:translate-x-0"
         [class.translate-x-0]="mobileMenuOpen()"
         [class.-translate-x-full]="!mobileMenuOpen()"
       >
@@ -111,38 +111,22 @@ interface NavItem {
         <!-- Navigation -->
         <nav class="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
           @for (item of navItems; track item.label) {
-            @if (item.available) {
-              <a
-                [routerLink]="item.route"
-                routerLinkActive="bg-support/15 text-support font-semibold border-support/30"
-                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                (click)="closeMobileMenu()"
-                class="flex items-center justify-between rounded-xl border border-transparent px-3.5 py-2.5 text-sm text-text-secondary hover:bg-background hover:text-text transition-colors"
-              >
-                <span>{{ item.label }}</span>
-                @if (item.route === '/notifications' && notificationService.unreadCount() > 0) {
-                  <span
-                    class="rounded-full bg-expense px-1.5 py-0.5 text-[10px] font-bold text-white"
-                  >
-                    {{ notificationService.unreadCount() }}
-                  </span>
-                }
-              </a>
-            } @else {
-              <div
-                class="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm text-text-muted/70 select-none"
-                title="Previsto para {{ item.sprintBadge }}"
-              >
-                <span>{{ item.label }}</span>
-                @if (item.sprintBadge) {
-                  <span
-                    class="rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-text-muted"
-                  >
-                    {{ item.sprintBadge }}
-                  </span>
-                }
-              </div>
-            }
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="bg-support/80 text-support font-semibold border-support/30"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              (click)="closeMobileMenu()"
+              class="flex items-center justify-between rounded-xl border border-transparent px-3.5 py-2.5 text-sm text-text hover:bg-support/40 transition-colors"
+            >
+              <span>{{ item.label }}</span>
+              @if (item.route === '/notifications' && notificationService.unreadCount() > 0) {
+                <span
+                  class="rounded-full bg-expense px-1.5 py-0.5 text-[10px] font-bold text-white"
+                >
+                  {{ notificationService.unreadCount() }}
+                </span>
+              }
+            </a>
           }
         </nav>
 

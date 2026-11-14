@@ -53,8 +53,8 @@ import {
         <div
           class="w-full max-w-md rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-sm"
         >
-          <div class="mb-6 text-center">
-            <h1 class="text-2xl font-bold text-text">Criar sua conta</h1>
+          <div class="mb-6">
+            <h1 class="text-2xl text-center font-bold text-text">Criar sua conta</h1>
             <p class="mt-1.5 text-sm text-text-secondary">
               Comece a organizar suas finanças pessoais com clareza e previsibilidade.
             </p>
