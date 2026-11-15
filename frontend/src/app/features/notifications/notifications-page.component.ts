@@ -57,7 +57,6 @@ type StatusFilter = 'ALL' | NotificationStatus;
             Total de Lembretes
           </p>
           <p class="mt-2 text-2xl font-bold text-text">{{ allNotifications().length }}</p>
-          <p class="mt-1 text-xs text-text-secondary">Histórico de alertas recebidos</p>
         </div>
 
         <div class="rounded-2xl border border-border bg-surface p-5 shadow-xs">
@@ -80,13 +79,11 @@ type StatusFilter = 'ALL' | NotificationStatus;
           >
             {{ unreadTotal() }}
           </p>
-          <p class="mt-1 text-xs text-text-secondary">Aguardando leitura ou conferência</p>
         </div>
 
         <div class="rounded-2xl border border-border bg-surface p-5 shadow-xs">
           <p class="text-xs font-semibold uppercase tracking-wider text-text-muted">Lidos</p>
           <p class="mt-2 text-2xl font-bold text-income">{{ readTotal() }}</p>
-          <p class="mt-1 text-xs text-text-secondary">Compromissos já verificados</p>
         </div>
       </div>
 

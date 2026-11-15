@@ -139,7 +139,7 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
 
           <div>
             <label for="fin-type" class="block text-xs font-medium text-text-secondary mb-1">
-              Tipo (Análise de Categorias)
+              Tipo
             </label>
             <select
               id="fin-type"
@@ -147,15 +147,15 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
               (ngModelChange)="loadFinancialData()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Entradas e Despesas</option>
-              <option value="EXPENSE">Apenas Despesas</option>
-              <option value="INCOME">Apenas Entradas</option>
+              <option value="">Todos</option>
+              <option value="EXPENSE">Despesas</option>
+              <option value="INCOME">Entradas</option>
             </select>
           </div>
 
           <div>
             <label for="fin-status" class="block text-xs font-medium text-text-secondary mb-1">
-              Status (Análise de Categorias)
+              Status
             </label>
             <select
               id="fin-status"
@@ -163,9 +163,9 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
               (ngModelChange)="loadFinancialData()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Realizados e Pendentes</option>
-              <option value="COMPLETED">Apenas Efetivados</option>
-              <option value="PENDING">Apenas Pendentes</option>
+              <option value="">Todos</option>
+              <option value="COMPLETED">Realizados</option>
+              <option value="PENDING">Pendentes</option>
             </select>
           </div>
 

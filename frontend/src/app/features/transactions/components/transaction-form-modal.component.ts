@@ -322,9 +322,9 @@ export class TransactionFormModalComponent {
   readonly modalTitle = computed(() => {
     const editing = this.editingTransaction();
     if (editing) {
-      return editing.type === 'INCOME' ? 'Editar Entrada' : 'Editar Despesa';
+      return 'Editar Transação';
     }
-    return this.form.controls.type.value === 'INCOME' ? 'Nova Entrada' : 'Nova Despesa';
+    return 'Nova Transação';
   });
 
   readonly form = this.fb.group({
@@ -411,7 +411,7 @@ export class TransactionFormModalComponent {
     const control = this.form.controls[field];
     return Boolean(
       (control.invalid && (control.dirty || control.touched)) ||
-        this.serverFieldErrors()[field]
+      this.serverFieldErrors()[field]
     );
   }
 

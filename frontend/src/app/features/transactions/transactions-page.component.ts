@@ -44,19 +44,10 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
           <button
             type="button"
             (click)="openCreateModal('INCOME')"
-            class="inline-flex items-center gap-2 rounded-xl bg-income px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
+            class="inline-flex items-center gap-2 rounded-xl bg-support px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
           >
             <span class="text-sm font-bold">+</span>
-            <span>Nova Entrada</span>
-          </button>
-
-          <button
-            type="button"
-            (click)="openCreateModal('EXPENSE')"
-            class="inline-flex items-center gap-2 rounded-xl bg-expense px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
-          >
-            <span class="text-sm font-bold">+</span>
-            <span>Nova Despesa</span>
+            <span>Nova Transação</span>
           </button>
         </div>
       </div>
@@ -748,11 +739,11 @@ export class TransactionsPageComponent implements OnInit {
   hasActiveFilters(): boolean {
     return Boolean(
       this.filterType ||
-        this.filterStatus ||
-        this.filterCategoryId ||
-        this.filterRecurringTransactionId ||
-        this.filterStartDate ||
-        this.filterEndDate
+      this.filterStatus ||
+      this.filterCategoryId ||
+      this.filterRecurringTransactionId ||
+      this.filterStartDate ||
+      this.filterEndDate
     );
   }
 

@@ -129,14 +129,10 @@ import { NoteFormModalComponent } from './components/note-form-modal.component';
                     <h2 class="text-base font-bold text-text line-clamp-2">
                       {{ note.title }}
                     </h2>
-                  } @else {
-                    <h2 class="text-sm font-medium italic text-text-muted">
-                      Sem título
-                    </h2>
                   }
 
                   <span
-                    class="shrink-0 rounded-md bg-background px-2 py-0.5 text-[10px] font-medium text-text-muted border border-border"
+                    class="shrink-0 rounded-md bg-background px-2 py-0.5 text-[10px] font-medium text-text-muted border border-border ml-auto"
                     title="Última atualização"
                   >
                     {{ note.updatedAt | date: 'dd/MM/yyyy HH:mm' }}

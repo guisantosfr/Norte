@@ -52,7 +52,7 @@ const MONTH_NAMES_PT = [
   template: `
     <div class="space-y-6">
       <!-- Cabeçalho e Ações Rápidas -->
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl font-bold text-text">
             Painel Financeiro
@@ -66,27 +66,11 @@ const MONTH_NAMES_PT = [
           <button
             type="button"
             (click)="openQuickTransactionModal('INCOME')"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-income px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-support px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
           >
             <span class="font-bold">+</span>
-            <span>Nova Entrada</span>
+            <span>Nova Transação</span>
           </button>
-
-          <button
-            type="button"
-            (click)="openQuickTransactionModal('EXPENSE')"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-expense px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
-          >
-            <span class="font-bold">+</span>
-            <span>Nova Despesa</span>
-          </button>
-
-          <a
-            routerLink="/recurrences"
-            class="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-text hover:bg-background transition-colors"
-          >
-            <span>↻ Recorrências</span>
-          </a>
         </div>
       </div>
 
