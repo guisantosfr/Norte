@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { LucideEye, LucideEyeOff } from '@lucide/angular';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { parseHttpError } from '../../../core/http/api-error.model';
@@ -14,7 +15,7 @@ import {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ThemeToggleComponent],
+  imports: [ReactiveFormsModule, RouterLink, LucideEye, LucideEyeOff, ThemeToggleComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-background text-text">
       <!-- Top Bar -->
@@ -123,16 +124,22 @@ import {
                   formControlName="password"
                   autocomplete="new-password"
                   placeholder="Mínimo de 8 caracteres"
-                  class="w-full rounded-xl border bg-background pl-3.5 pr-16 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
+                  class="w-full rounded-xl border bg-background pl-3.5 pr-11 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
                   [class.border-expense]="hasFieldError('password')"
                   [class.border-border]="!hasFieldError('password')"
                 />
                 <button
                   type="button"
                   (click)="togglePassword()"
-                  class="absolute inset-y-0 right-2.5 my-auto h-7 px-2 text-xs font-medium text-text-secondary hover:text-text cursor-pointer"
+                  [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  [attr.title]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                  class="absolute inset-y-0 right-2 my-auto flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:text-text transition-colors cursor-pointer"
                 >
-                  {{ showPassword() ? 'Ocultar' : 'Mostrar' }}
+                  @if (showPassword()) {
+                    <svg lucideEyeOff [size]="18" />
+                  } @else {
+                    <svg lucideEye [size]="18" />
+                  }
                 </button>
               </div>
               @if (getFieldError('password'); as error) {

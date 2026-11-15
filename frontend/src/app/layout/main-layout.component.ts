@@ -8,9 +8,11 @@ import {
   LucideIcon,
   LucideLayoutDashboard,
   LucideLogOut,
+  LucideMenu,
   LucideRepeat,
   LucideStickyNote,
   LucideTags,
+  LucideX,
 } from '@lucide/angular';
 import { AuthService } from '../core/auth/auth.service';
 import { NotificationService } from '../core/services/notification.service';
@@ -36,14 +38,16 @@ interface NavItem {
     RouterLinkActive,
     LucideDynamicIcon,
     LucideLogOut,
+    LucideMenu,
+    LucideX,
     ThemeToggleComponent,
     NotificationBellComponent,
   ],
   template: `
-    <div class="min-h-screen flex flex-col lg:flex-row bg-background text-text">
+    <div class="h-screen overflow-hidden flex flex-col bg-background text-text">
       <!-- Mobile Header -->
       <header
-        class="lg:hidden flex items-center justify-between border-b border-border bg-surface px-4 py-3"
+        class="lg:hidden shrink-0 flex items-center justify-between border-b border-border bg-surface px-4 py-3"
       >
         <div class="flex items-center gap-2.5">
           <button
@@ -52,16 +56,7 @@ interface NavItem {
             aria-label="Abrir menu de navegação"
             class="rounded-lg border border-border p-2 text-text-secondary hover:bg-background hover:text-text cursor-pointer"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <svg lucideMenu [size]="20" />
           </button>
           <span class="text-base font-bold text-text">Norte</span>
         </div>
@@ -83,9 +78,11 @@ interface NavItem {
 
       <!-- Sidebar -->
       <aside
-        class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-border bg-surface transition-transform duration-200 lg:static lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-border bg-surface transition-transform duration-200"
         [class.translate-x-0]="mobileMenuOpen()"
         [class.-translate-x-full]="!mobileMenuOpen()"
+        [class.lg:translate-x-0]="desktopSidebarOpen()"
+        [class.lg:-translate-x-full]="!desktopSidebarOpen()"
       >
         <!-- Brand -->
         <div class="flex items-center justify-between border-b border-border px-5 py-4">
@@ -119,7 +116,7 @@ interface NavItem {
             aria-label="Fechar menu"
             class="lg:hidden rounded-lg p-1 text-text-muted hover:text-text cursor-pointer"
           >
-            ✕
+            <svg lucideX [size]="18" />
           </button>
         </div>
 
@@ -178,12 +175,24 @@ interface NavItem {
       </aside>
 
       <!-- Main Area -->
-      <div class="flex-1 flex flex-col min-w-0">
+      <div
+        class="flex-1 flex flex-col min-w-0 min-h-0 transition-[padding] duration-200"
+        [class.lg:pl-60]="desktopSidebarOpen()"
+      >
         <!-- Desktop Topbar -->
         <header
-          class="hidden lg:flex items-center justify-between border-b border-border bg-surface px-8 py-3.5"
+          class="hidden lg:flex shrink-0 items-center justify-between border-b border-border bg-surface px-8 py-3.5"
         >
-          <div>
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              (click)="toggleDesktopSidebar()"
+              [attr.aria-label]="desktopSidebarOpen() ? 'Ocultar menu lateral' : 'Exibir menu lateral'"
+              [attr.aria-expanded]="desktopSidebarOpen()"
+              class="rounded-lg border border-border p-2 text-text-secondary hover:bg-background hover:text-text transition-colors cursor-pointer"
+            >
+              <svg lucideMenu [size]="18" />
+            </button>
             <p class="text-sm font-medium text-text-secondary">
               Olá, <span class="font-semibold text-text">{{ authService.currentUser()?.name }}</span>
             </p>
@@ -196,8 +205,10 @@ interface NavItem {
         </header>
 
         <!-- Page Content -->
-        <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <router-outlet />
+        <main class="flex-1 overflow-y-auto min-h-0">
+          <div class="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <router-outlet />
+          </div>
         </main>
       </div>
     </div>
@@ -209,6 +220,7 @@ export class MainLayoutComponent {
   private readonly toastService = inject(ToastService);
 
   readonly mobileMenuOpen = signal(false);
+  readonly desktopSidebarOpen = signal(true);
 
   readonly navItems: NavItem[] = [
     {
@@ -240,6 +252,10 @@ export class MainLayoutComponent {
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen.update((open) => !open);
+  }
+
+  toggleDesktopSidebar(): void {
+    this.desktopSidebarOpen.update((open) => !open);
   }
 
   closeMobileMenu(): void {
