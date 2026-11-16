@@ -37,7 +37,7 @@ O **Norte** foi concebido para resolver essa dor com foco em **simplicidade oper
 
 ## 💡 Proposta de Valor e Funcionalidades Principais
 
-- **Autenticação Segura e Isolamento de Dados**: Cadastro e login stateless com JWT, validação de senha compatível com o limite UTF-8 de 72 bytes do BCrypt e isolamento rigoroso de dados por usuário (`userId`).
+- **Autenticação Segura, Refresh Tokens e Isolamento de Dados**: Cadastro e login com **Rate Limiting** por IP, emissão de Access Token JWT de curta duração (15 min) acompanhado de **Refresh Token opaco** armazenado como hash SHA-256 com **rotação por uso**, **detecção de reutilização de tokens antigos** (invalidando toda a família de sessão), expiração por inatividade (7 dias) e absoluta (30 dias), revogação no logout, validação de senha compatível com o limite UTF-8 de 72 bytes do BCrypt e isolamento rigoroso de dados por usuário (`userId`).
 - **Gestão Completa de Entradas e Despesas (`/transactions`)**:
   - Criação rápida de entradas (padrão `PENDING`) e despesas (padrão `COMPLETED`).
   - Filtros combinados por tipo, status, categoria, série recorrente e intervalo de datas.
@@ -79,7 +79,7 @@ flowchart TB
     subgraph BackendPlatform["Plataforma de Container Backend (Docker / JRE 25)"]
         SpringAPI["⚙️ Norte API\nSpring Boot 4.1.2 (Java 25)\nREST Controllers + Spring Security JWT"]
         Scheduler["⏰ NotificationScheduler\nAgendador Cron Diário & Startup\n(Geração Idempotente de Lembretes)"]
-        Flyway["🛫 Flyway Migrations\nVersionamento de Schema (V1..V6)"]
+        Flyway["🛫 Flyway Migrations\nVersionamento de Schema (V1..V7)"]
     end
 
     subgraph DatabasePlatform["Plataforma de Banco de Dados Gerenciado"]
@@ -102,12 +102,12 @@ flowchart LR
     subgraph Angular["Frontend — Angular 22"]
         UI["Features Lazy-Loaded\n(Dashboard, Transactions, Categories,\nFinancial, Recurrences, Notifications, Notes)"]
         Services["Core Services + Signals\n(AuthService, TransactionService,\nFinancialService, NotificationService...)"]
-        Interceptors["HTTP Interceptors\n(authInterceptor + errorInterceptor)"]
+        Interceptors["HTTP Interceptors\n(errorInterceptor + authInterceptor\ncom fila de Refresh Token)"]
         UI --> Services --> Interceptors
     end
 
     subgraph Spring["Backend — Spring Boot 4.1.2"]
-        Security["JwtAuthenticationFilter\n& SecurityConfig"]
+        Security["AuthRateLimitFilter,\nJwtAuthenticationFilter & SecurityConfig"]
         Controllers["REST Controllers\n+ Jakarta Validation"]
         DomainServices["Domain Services\n(Transaction, Category, Financial,\nRecurringTransaction, Notification, Note)"]
         ExceptionHandler["GlobalExceptionHandler\n(Envelope ApiErrorResponse)"]
@@ -158,6 +158,7 @@ sequenceDiagram
 
 ```mermaid
 erDiagram
+    USERS ||--o{ REFRESH_TOKENS : "mantém sessões"
     USERS ||--o{ CATEGORIES : "possui"
     USERS ||--o{ TRANSACTIONS : "registra"
     USERS ||--o{ RECURRING_TRANSACTIONS : "configura"
@@ -171,11 +172,23 @@ erDiagram
 
     USERS {
         uuid id PK
-         varchar name
+        varchar name
         varchar email UK
         varchar password
         timestamp created_at
         timestamp updated_at
+    }
+
+    REFRESH_TOKENS {
+        uuid id PK
+        uuid user_id FK
+        varchar token_hash UK
+        uuid family_id
+        boolean revoked
+        timestamp revoked_at
+        timestamp expires_at
+        timestamp last_used_at
+        timestamp created_at
     }
 
     CATEGORIES {
@@ -263,7 +276,7 @@ Norte/
 │   ├── env.example           # Exemplo de variáveis de ambiente do backend
 │   ├── pom.xml               # Configuração Maven e dependências
 │   ├── README.md             # Guia específico de execução, variáveis e endpoints do backend
-│   └── src/                  # Código-fonte Java, migrações Flyway (V1..V6) e testes de integração
+│   └── src/                  # Código-fonte Java, migrações Flyway (V1..V7) e testes de integração
 └── frontend/                 # Aplicação SPA em Angular 22 + Tailwind CSS v4
     ├── env.example           # Exemplo de variáveis de ambiente do frontend
     ├── package.json          # Scripts npm e dependências
@@ -311,7 +324,7 @@ O projeto está preparado para publicação distribuída em **três plataformas 
 
 1. **Banco de Dados (PostgreSQL Gerenciado)** — *ex.: Neon, Supabase, Railway Postgres, Render Postgres*:
    - Provisione a instância PostgreSQL e copie as credenciais (`DB_URL` em formato JDBC, `DB_USER` e `DB_PASSWORD`).
-   - Não é necessário rodar scripts SQL manualmente: o **Flyway** aplica automaticamente as migrações `V1` a `V6` quando o backend iniciar.
+   - Não é necessário rodar scripts SQL manualmente: o **Flyway** aplica automaticamente as migrações `V1` a `V7` quando o backend iniciar.
 
 2. **Backend (Container Docker)** — *ex.: Render, Railway, Fly.io, Koyeb*:
    - Aponte o serviço para o diretório `backend/` utilizando o [`backend/Dockerfile`](backend/Dockerfile).

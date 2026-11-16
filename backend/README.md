@@ -9,8 +9,8 @@ API RESTful do **Norte**, responsável pela autenticação stateless via JWT, re
 - **Linguagem**: Java 25
 - **Framework**: Spring Boot 4.1.2 (`spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`, `spring-boot-starter-validation`)
 - **Banco de Dados**: PostgreSQL
-- **Migrações de Schema**: Flyway (`spring-boot-starter-flyway`, `flyway-database-postgresql` — versões `V1` a `V6`)
-- **Autenticação & Segurança**: Spring Security + JSON Web Token (`jjwt 0.12.6`) + BCrypt
+- **Migrações de Schema**: Flyway (`spring-boot-starter-flyway`, `flyway-database-postgresql` — versões `V1` a `V7`)
+- **Autenticação & Segurança**: Spring Security + JSON Web Token (`jjwt 0.12.6`) + Refresh Tokens opacos (hash SHA-256 com rotação e detecção de reutilização) + Rate Limiting em memória + BCrypt
 - **Documentação da API (OpenAPI 3 / Swagger)**: `springdoc-openapi-starter-webmvc-ui 3.2.0` (habilitada exclusivamente no perfil `dev`)
 - **Testes Automatizados**: JUnit 5, Spring Boot Test, MockMvc e Spring Security Test
 - **Containerização**: Docker (build multi-stage com `eclipse-temurin:25-jdk-alpine` e `eclipse-temurin:25-jre-alpine`)
@@ -21,14 +21,14 @@ API RESTful do **Norte**, responsável pela autenticação stateless via JWT, re
 
 ```text
 backend/src/main/java/com/norte/norte_api/
-├── config/          # Configurações de segurança (SecurityConfig, CORS), OpenAPI e relógio/timezone
+├── config/          # Configurações de segurança (SecurityConfig, CORS, AuthProperties), OpenAPI e relógio/timezone
 ├── controller/      # Endpoints REST (Auth, Transaction, Category, Financial, RecurringTransaction, Notification, Note)
 ├── dto/             # Records imutáveis de entrada e saída com Jakarta Bean Validation
 ├── exception/       # Hierarquia de exceções de domínio e GlobalExceptionHandler padronizado (ApiErrorResponse)
 ├── models/          # Entidades JPA e Enums de domínio
 ├── repository/      # Repositórios Spring Data JPA e Specifications dinâmicas
-├── security/        # Filtro JWT (JwtAuthenticationFilter), JwtService e UserPrincipal
-├── service/         # Regras de negócio, motor de recorrências e agendador de lembretes (NotificationScheduler)
+├── security/        # Filtro JWT (JwtAuthenticationFilter), JwtTokenProvider, UserPrincipal e rate limiting (security/ratelimit)
+├── service/         # Regras de negócio, RefreshTokenService, motor de recorrências e agendador de lembretes (NotificationScheduler)
 └── validation/      # Validadores customizados (@PasswordMatches, @MaxUtf8Bytes)
 ```
 
@@ -50,7 +50,15 @@ cp env.example .env
 | `DB_USER` | Sim | `postgres` | Usuário do banco de dados PostgreSQL. |
 | `DB_PASSWORD` | Sim | `postgres` | Senha do banco de dados PostgreSQL. |
 | `JWT_SECRET` | Sim | `chave-secreta-com-pelo-menos-32-caracteres-hmac-sha256` | Segredo HMAC-SHA para assinatura e validação dos tokens JWT (mínimo 256 bits / 32 caracteres). |
-| `JWT_EXPIRATION_MS` | Sim | `86400000` | Tempo de expiração do token JWT em milissegundos (ex.: `86400000` = 24h). |
+| `JWT_EXPIRATION_MS` | Não (padrão `900000`) | `900000` | Tempo de expiração do access token JWT em milissegundos (padrão: `900000` = 15 minutos). |
+| `AUTH_REFRESH_TOKEN_EXPIRATION_DAYS` | Não (padrão `30`) | `30` | Prazo máximo absoluto de vida de uma família de refresh tokens (em dias). |
+| `AUTH_REFRESH_TOKEN_INACTIVITY_DAYS` | Não (padrão `7`) | `7` | Prazo máximo de inatividade sem renovação antes da expiração do refresh token (em dias). |
+| `AUTH_RATE_LIMIT_ENABLED` | Não (padrão `true`) | `true` | Habilita ou desabilita o rate limiting nas rotas de cadastro e login. |
+| `AUTH_RATE_LIMIT_TRUST_PROXY_HEADERS` | Não (padrão `false`) | `false` | Quando `true`, lê o cabeçalho `X-Forwarded-For` para resolução de IP atrás de proxy reverso confiável. |
+| `AUTH_RATE_LIMIT_LOGIN_CAPACITY` | Não (padrão `5`) | `5` | Máximo de tentativas permitidas por IP na janela para `POST /auth/login`. |
+| `AUTH_RATE_LIMIT_LOGIN_DURATION_SECONDS` | Não (padrão `60`) | `60` | Duração da janela deslizante do rate limit de login (em segundos). |
+| `AUTH_RATE_LIMIT_REGISTER_CAPACITY` | Não (padrão `3`) | `3` | Máximo de cadastros permitidos por IP na janela para `POST /auth/register`. |
+| `AUTH_RATE_LIMIT_REGISTER_DURATION_SECONDS` | Não (padrão `60`) | `60` | Duração da janela deslizante do rate limit de cadastro (em segundos). |
 | `APP_TIMEZONE` | Sim | `America/Sao_Paulo` | Fuso horário padrão de referência da aplicação. |
 | `CORS_ALLOWED_ORIGINS` | Sim | `http://localhost:4200` | Origens permitidas no CORS (separadas por vírgula se houver mais de uma). |
 | `NOTIFICATION_REMINDER_CRON` | Sim | `0 0 6 * * *` | Expressão cron do agendador diário de lembretes (ex.: todos os dias às 06:00). |
@@ -75,7 +83,7 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 - A API estará disponível em: `http://localhost:8080`
-- As migrações do Flyway (`V1` a `V6`) serão aplicadas automaticamente na inicialização.
+- As migrações do Flyway (`V1` a `V7`) serão aplicadas automaticamente na inicialização.
 - No perfil `dev`, a documentação interativa OpenAPI/Swagger pode ser acessada em:
   - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
   - **OpenAPI JSON**: `http://localhost:8080/api-docs`
@@ -115,8 +123,10 @@ docker run --rm -p 8080:8080 --env-file .env norte-api:latest
 
 | Módulo | Método & Rota | Descrição |
 | :--- | :--- | :--- |
-| **Autenticação** | `POST /auth/register` | Cria conta de usuário e retorna token JWT + dados do usuário. |
-| | `POST /auth/login` | Autentica credenciais e retorna token JWT + dados do usuário. |
+| **Autenticação** | `POST /auth/register` | Cria conta de usuário (com rate limit de 3/min por IP) e retorna access JWT + refresh token + dados do usuário. |
+| | `POST /auth/login` | Autentica credenciais (com rate limit de 5/min por IP) e retorna access JWT + refresh token + dados do usuário. |
+| | `POST /auth/refresh` | Rotaciona o refresh token e emite novo par de tokens (com detecção de reutilização e lock pessimista). |
+| | `POST /auth/logout` | Revoga a família do refresh token informado (`204 No Content`). |
 | | `GET /auth/me` | Retorna os dados do usuário autenticado. |
 | **Transações** | `GET /transactions` | Lista transações com filtros (`type`, `status`, `categoryId`, `recurringTransactionId`, `startDate`, `endDate`). |
 | | `POST /transactions` | Cria transação genérica (com suporte a `categoryId` ou criação inline via `categoryName`). |
@@ -146,3 +156,13 @@ docker run --rm -p 8080:8080 --env-file .env norte-api:latest
 | | `POST /notes` | Cria uma nova anotação pessoal. |
 | | `PUT /notes/{id}` | Atualiza título e conteúdo de uma anotação. |
 | | `DELETE /notes/{id}` | Exclui permanentemente uma anotação. |
+
+---
+
+## Segurança da Autenticação (Rate Limiting & Refresh Token)
+
+- **Rate Limiting (`AuthRateLimitFilter` + `AuthRateLimiter`)**: Aplicado em memória via janela deslizante por IP antes do processamento de credenciais com BCrypt (evitando sobrecarga de CPU). Ao exceder o limite configurado (`5/min` em login, `3/min` em cadastro), retorna `HTTP 429 Too Many Requests` com header `Retry-After` e payload padrão `ApiErrorResponse`. Possui limpeza automática periódica de baldes ociosos.
+- **Refresh Tokens (`RefreshTokenService`)**:
+  - **Armazenamento Seguro**: Tokens opacos de 256 bits (`SecureRandom`); apenas o hash **SHA-256** é persistido na tabela `refresh_tokens`.
+  - **Rotação e Detecção de Reutilização**: Cada renovação (`POST /auth/refresh`) usa lock pessimista no banco, invalida o token anterior e emite um novo na mesma família (`family_id`). Caso um token já revogado seja reutilizado, toda a família é revogada imediatamente (`401 Unauthorized`).
+  - **Expiração e Limpeza**: Controle simultâneo de inatividade (7 dias) e teto absoluto de sessão (30 dias), com expurgo diário agendado às 03:00 (`purgeExpiredTokens`).

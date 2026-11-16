@@ -10,6 +10,14 @@ export interface UserRequestDTO {
   confirmPassword: string;
 }
 
+export interface RefreshTokenRequestDTO {
+  refreshToken: string;
+}
+
+export interface LogoutRequestDTO {
+  refreshToken?: string;
+}
+
 export interface UserResponseDTO {
   id: string;
   name: string;
@@ -21,5 +29,6 @@ export interface UserResponseDTO {
 export interface AuthResponseDTO {
   tokenType: string;
   token: string;
+  refreshToken: string;
   user: UserResponseDTO;
 }

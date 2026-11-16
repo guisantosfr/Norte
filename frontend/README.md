@@ -26,8 +26,8 @@ frontend/
     ├── styles.css                     # Tokens de tema Claro/Escuro e configuração Tailwind CSS v4
     └── app/
         ├── core/
-        │   ├── auth/                  # AuthService, authInterceptor, authGuard e guestGuard
-        │   ├── http/                  # errorInterceptor global e parser de ApiErrorResponse
+        │   ├── auth/                  # AuthService (sessão, refresh single-flight, logout), authInterceptor, authGuard e guestGuard
+        │   ├── http/                  # errorInterceptor global (401/429/5xx) e parser de ApiErrorResponse
         │   ├── models/                # Interfaces e tipos espelhando os DTOs do backend
         │   └── services/              # Serviços HTTP de domínio (Transactions, Categories, Financial, Recurrences, Notifications, Notes, Theme)
         ├── shared/
@@ -101,6 +101,18 @@ npm start
 | `npm run build` | Compila e otimiza o bundle de produção em `dist/norte-frontend/browser`. |
 | `npm test` | Executa a suíte de testes unitários com Vitest (`ng test`). |
 | `npm test -- --watch=false` | Executa todos os testes unitários em modo headless/CI (execução única). |
+
+---
+
+## Autenticação, Refresh Token e Rate Limiting
+
+- **Persistência de Sessão (`AuthService`)**: Armazena o `token` (Access JWT), o `refreshToken` e os dados públicos do usuário no `localStorage`. Na inicialização da aplicação (`initializeSession`), se o token de acesso estiver expirado ou ausente mas houver `refreshToken`, a sessão é renovada automaticamente antes de deslogar o usuário.
+- **Renovação Transparente & Fila de Concorrência (`authInterceptor`)**:
+  - Ao receber `HTTP 401` em rotas protegidas, o `authInterceptor` (executado internamente após o `errorInterceptor` no fluxo de resposta) solicita um novo par de tokens via `POST /auth/refresh` usando mecanismo *single-flight* (`shareReplay`).
+  - Requisições paralelas que falhem simultaneamente aguardam a mesma chamada de renovação em voo (ou reaproveitam o token já rotacionado), evitando falso-positivo de reutilização de refresh token no backend.
+  - Cada requisição é retentada no máximo uma vez (`IS_RETRY_AFTER_REFRESH`). Se a renovação falhar, o `errorInterceptor` limpa a sessão, exibe um aviso e redireciona para `/login`.
+- **Logout com Revogação**: Ao sair, o `AuthService.logout()` envia `POST /auth/logout` com o `refreshToken` para invalidar toda a família de sessão no servidor e limpa o estado local imediatamente.
+- **Rate Limiting (`429 Too Many Requests`)**: Nas telas de Login e Cadastro, alertas inline exibem a mensagem retornada pela API quando o limite de tentativas é excedido; em outras rotas, o `errorInterceptor` notifica o usuário via toast.
 
 ---
 
