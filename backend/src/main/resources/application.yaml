@@ -16,6 +16,20 @@ jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS}
 
+auth:
+  refresh-token:
+    expiration-days: ${AUTH_REFRESH_TOKEN_EXPIRATION_DAYS}
+    inactivity-days: ${AUTH_REFRESH_TOKEN_INACTIVITY_DAYS}
+  rate-limit:
+    enabled: ${AUTH_RATE_LIMIT_ENABLED}
+    trust-proxy-headers: ${AUTH_RATE_LIMIT_TRUST_PROXY_HEADERS}
+    login:
+      capacity: ${AUTH_RATE_LIMIT_LOGIN_CAPACITY}
+      duration-seconds: ${AUTH_RATE_LIMIT_LOGIN_DURATION_SECONDS}
+    register:
+      capacity: ${AUTH_RATE_LIMIT_REGISTER_CAPACITY}
+      duration-seconds: ${AUTH_RATE_LIMIT_REGISTER_DURATION_SECONDS}
+
 app:
   timezone: ${APP_TIMEZONE}
 

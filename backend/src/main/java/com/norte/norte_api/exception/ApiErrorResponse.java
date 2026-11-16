@@ -112,6 +112,17 @@ public record ApiErrorResponse(
                                 List.of());
         }
 
+        /** Resposta para excesso de requisições em rotas com rate limit (429). */
+        public static ApiErrorResponse tooManyRequests(String path, String message) {
+                return new ApiErrorResponse(
+                                Instant.now(),
+                                HttpStatus.TOO_MANY_REQUESTS,
+                                "TOO_MANY_REQUESTS",
+                                message,
+                                path,
+                                List.of());
+        }
+
         /** Resposta para erros internos inesperados (500). Nunca expõe detalhes. */
         public static ApiErrorResponse internalError(String path, String correlationId) {
                 return new ApiErrorResponse(

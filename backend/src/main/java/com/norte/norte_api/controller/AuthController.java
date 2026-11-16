@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.norte.norte_api.dto.AuthResponseDTO;
 import com.norte.norte_api.dto.LoginRequestDTO;
+import com.norte.norte_api.dto.LogoutRequestDTO;
+import com.norte.norte_api.dto.RefreshTokenRequestDTO;
 import com.norte.norte_api.dto.UserRequestDTO;
 import com.norte.norte_api.dto.UserResponseDTO;
 import com.norte.norte_api.security.UserPrincipal;
@@ -20,13 +22,17 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 /**
- * Endpoints de autenticação — cadastro, login e perfil do usuário autenticado.
+ * Endpoints de autenticação — cadastro, login, renovação de token, logout e perfil.
  *
  * <ul>
- * <li>{@code POST /auth/register} — público, cria um novo usuário e retorna
- * token Bearer + dados do usuário</li>
- * <li>{@code POST /auth/login} — público, retorna token Bearer + dados do
- * usuário</li>
+ * <li>{@code POST /auth/register} — público (rate limited), cria um novo usuário
+ * e retorna access token + refresh token + dados do usuário</li>
+ * <li>{@code POST /auth/login} — público (rate limited), retorna access token +
+ * refresh token + dados do usuário</li>
+ * <li>{@code POST /auth/refresh} — público, rotaciona o refresh token e emite
+ * novo par de tokens</li>
+ * <li>{@code POST /auth/logout} — público, revoga a família do refresh token
+ * informado</li>
  * <li>{@code GET  /auth/me} — protegido, retorna os dados do usuário
  * autenticado</li>
  * </ul>
@@ -50,6 +56,17 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         return authService.login(loginRequest);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponseDTO refresh(@Valid @RequestBody RefreshTokenRequestDTO refreshRequest) {
+        return authService.refresh(refreshRequest);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@RequestBody(required = false) LogoutRequestDTO logoutRequest) {
+        authService.logout(logoutRequest);
     }
 
     /**

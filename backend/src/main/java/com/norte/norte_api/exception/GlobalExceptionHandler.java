@@ -213,6 +213,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         "Credenciais inválidas."));
     }
 
+    /**
+     * Refresh token inválido, expirado, revogado ou reutilizado.
+     */
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRefreshToken(
+            InvalidRefreshTokenException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiErrorResponse.unauthorized(request.getRequestURI(), ex.getMessage()));
+    }
+
     // ─── 404 Not Found ──────────────────────────────────────────────────────────
 
     /**

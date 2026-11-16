@@ -27,8 +27,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.norte.norte_api.security.JwtAccessDeniedHandler;
 import com.norte.norte_api.security.JwtAuthenticationEntryPoint;
 import com.norte.norte_api.security.JwtAuthenticationFilter;
+import com.norte.norte_api.security.ratelimit.AuthRateLimitFilter;
+import com.norte.norte_api.security.ratelimit.AuthRateLimiter;
+import com.norte.norte_api.security.ratelimit.ClientIpResolver;
 
 import jakarta.servlet.DispatcherType;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuração central do Spring Security.
@@ -51,7 +55,7 @@ import jakarta.servlet.DispatcherType;
  */
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(CorsProperties.class)
+@EnableConfigurationProperties({ CorsProperties.class, AuthProperties.class })
 public class SecurityConfig {
 
     /** Rotas do springdoc liberadas apenas no perfil {@code dev}. */
@@ -67,21 +71,36 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final Environment environment;
     private final CorsProperties corsProperties;
+    private final AuthProperties authProperties;
+    private final AuthRateLimiter authRateLimiter;
+    private final ClientIpResolver clientIpResolver;
+    private final ObjectMapper objectMapper;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint authenticationEntryPoint,
             JwtAccessDeniedHandler accessDeniedHandler,
             Environment environment,
-            CorsProperties corsProperties) {
+            CorsProperties corsProperties,
+            AuthProperties authProperties,
+            AuthRateLimiter authRateLimiter,
+            ClientIpResolver clientIpResolver,
+            ObjectMapper objectMapper) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.environment = environment;
         this.corsProperties = corsProperties;
+        this.authProperties = authProperties;
+        this.authRateLimiter = authRateLimiter;
+        this.clientIpResolver = clientIpResolver;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        AuthRateLimitFilter authRateLimitFilter = new AuthRateLimitFilter(
+                authRateLimiter, clientIpResolver, authProperties, objectMapper);
+
         http
                 // ── CSRF ────────────────────────────────────────────────────────────────
                 // Desabilitado: API stateless com Bearer token. Sem cookies de sessão,
@@ -109,7 +128,9 @@ public class SecurityConfig {
                     auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
 
                     auth.requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
+                            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll();
 
                     // Swagger público somente em dev. Fora dele, além do springdoc
                     // estar desligado, as rotas caem em authenticated().
@@ -120,8 +141,9 @@ public class SecurityConfig {
                     auth.anyRequest().authenticated();
                 })
 
-                // ── Filtro JWT ────────────────────────────────────────────────────────────
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // ── Filtros (Rate Limit + JWT) ────────────────────────────────────────────
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authRateLimitFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
