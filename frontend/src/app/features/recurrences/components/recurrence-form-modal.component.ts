@@ -164,6 +164,7 @@ export type RecurrenceMode = 'FIXED' | 'INSTALLMENT';
                 id="rec-description"
                 type="text"
                 formControlName="description"
+                autocomplete="off"
                 [placeholder]="
                   mode() === 'INSTALLMENT'
                     ? 'Ex.: Notebook, Seguro Anual, Curso...'

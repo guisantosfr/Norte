@@ -125,9 +125,9 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Todos os tipos</option>
-              <option value="INCOME">Apenas Entradas</option>
-              <option value="EXPENSE">Apenas Despesas</option>
+              <option value="">Todos</option>
+              <option value="INCOME">Entradas</option>
+              <option value="EXPENSE">Despesas</option>
             </select>
           </div>
 
@@ -142,7 +142,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Todos os status</option>
+              <option value="">Todos</option>
               <option value="PENDING">Pendente</option>
               <option value="COMPLETED">Efetivado</option>
               <option value="CANCELED">Cancelado</option>
@@ -160,7 +160,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Todas as categorias</option>
+              <option value="">Todas</option>
               @for (cat of categories(); track cat.id) {
                 <option [value]="cat.id">
                   {{ cat.name }}{{ !cat.active ? ' (Inativa)' : '' }}

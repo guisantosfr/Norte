@@ -111,6 +111,7 @@ import { ToastService } from '../../../shared/services/toast.service';
                 id="tx-description"
                 type="text"
                 formControlName="description"
+                autocomplete="off"
                 placeholder="Ex.: Salário mensal, Conta de energia, Supermercado..."
                 class="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
                 [class.border-expense]="hasFieldError('description')"

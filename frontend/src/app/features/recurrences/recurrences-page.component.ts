@@ -41,25 +41,14 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button
+         <button
             type="button"
             (click)="openCreateModal('FIXED')"
             class="inline-flex items-center gap-2 rounded-xl bg-support px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
           >
             <span class="text-sm font-bold">+</span>
-            <span>Nova Recorrência Fixa</span>
+            <span>Nova Recorrência</span>
           </button>
-
-          <button
-            type="button"
-            (click)="openCreateModal('INSTALLMENT')"
-            class="inline-flex items-center gap-2 rounded-xl bg-info px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer"
-          >
-            <span class="text-sm font-bold">+</span>
-            <span>Novo Parcelamento</span>
-          </button>
-        </div>
       </div>
 
       <!-- Cards de Indicadores das Séries Ativas -->
@@ -118,9 +107,9 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
               [(ngModel)]="filterModality"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="ALL">Recorrências e Parcelamentos</option>
-              <option value="FIXED">Apenas Recorrências Fixas</option>
-              <option value="INSTALLMENT">Apenas Parcelamentos</option>
+              <option value="ALL">Todas</option>
+              <option value="FIXED">Recorrências Fixas</option>
+              <option value="INSTALLMENT">Parcelamentos</option>
             </select>
           </div>
 
@@ -135,9 +124,9 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
               (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Todas (Ativas e Encerradas)</option>
-              <option value="true">Apenas Ativas</option>
-              <option value="false">Apenas Encerradas</option>
+              <option value="">Todas</option>
+              <option value="true">Ativas</option>
+              <option value="false">Encerradas</option>
             </select>
           </div>
 
@@ -152,9 +141,9 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
               (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Entradas e Despesas</option>
-              <option value="INCOME">Apenas Entradas</option>
-              <option value="EXPENSE">Apenas Despesas</option>
+              <option value="">Todas</option>
+              <option value="INCOME">Entradas</option>
+              <option value="EXPENSE">Despesas</option>
             </select>
           </div>
 
@@ -169,7 +158,7 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
               (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
-              <option value="">Todas as categorias</option>
+              <option value="">Todas</option>
               @for (cat of categories(); track cat.id) {
                 <option [value]="cat.id">
                   {{ cat.name }}{{ !cat.active ? ' (Inativa)' : '' }}
@@ -229,23 +218,6 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
           <p class="mt-1 max-w-md text-xs text-text-secondary">
             Cadastre despesas fixas (aluguel, assinaturas), receitas recorrentes (salário) ou compras parceladas para gerar automaticamente as ocorrências futuras.
           </p>
-
-          <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-            <button
-              type="button"
-              (click)="openCreateModal('FIXED')"
-              class="rounded-xl bg-support px-4 py-2 text-xs font-semibold text-white hover:opacity-95 transition-opacity cursor-pointer"
-            >
-              + Nova Recorrência Fixa
-            </button>
-            <button
-              type="button"
-              (click)="openCreateModal('INSTALLMENT')"
-              class="rounded-xl bg-info px-4 py-2 text-xs font-semibold text-white hover:opacity-95 transition-opacity cursor-pointer"
-            >
-              + Novo Parcelamento
-            </button>
-          </div>
         </div>
       } @else {
         <!-- Grid de Cartões de Recorrências / Parcelamentos -->
@@ -486,9 +458,9 @@ export class RecurrencesPageComponent implements OnInit {
   hasActiveFilters(): boolean {
     return Boolean(
       this.filterModality !== 'ALL' ||
-        this.filterActive ||
-        this.filterType ||
-        this.filterCategoryId
+      this.filterActive ||
+      this.filterType ||
+      this.filterCategoryId
     );
   }
 

@@ -30,21 +30,6 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
             Consulte seus saldos acumulados, resultados do período e distribuição por categoria.
           </p>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <a
-            routerLink="/categories"
-            class="rounded-xl border border-border bg-surface px-4 py-2 text-xs font-semibold text-text hover:bg-background transition-colors"
-          >
-            Gerenciar Categorias
-          </a>
-          <a
-            routerLink="/transactions"
-            class="rounded-xl bg-support px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
-          >
-            Ver Transações
-          </a>
-        </div>
       </div>
 
       <!-- Filtro de Período -->
