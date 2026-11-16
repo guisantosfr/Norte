@@ -129,7 +129,6 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
             <select
               id="fin-type"
               [(ngModel)]="categoryTypeFilter"
-              (ngModelChange)="loadFinancialData()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todos</option>
@@ -145,7 +144,6 @@ type PeriodPreset = 'current-month' | 'previous-month' | 'current-year' | 'all' 
             <select
               id="fin-status"
               [(ngModel)]="categoryStatusFilter"
-              (ngModelChange)="loadFinancialData()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todos</option>
@@ -496,7 +494,6 @@ export class FinancialPageComponent implements OnInit {
 
   onCustomDateChange(): void {
     this.activePreset.set('custom');
-    this.loadFinancialData();
   }
 
   loadFinancialData(): void {

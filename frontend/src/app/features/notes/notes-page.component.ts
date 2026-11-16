@@ -193,6 +193,7 @@ import { NoteFormModalComponent } from './components/note-form-modal.component';
       <!-- Delete Confirmation Modal -->
       @if (deletingNote(); as noteToDelete) {
         <app-confirm-dialog
+          [open]="true"
           title="Excluir anotação"
           [message]="
             noteToDelete.title
@@ -203,6 +204,7 @@ import { NoteFormModalComponent } from './components/note-form-modal.component';
           "
           confirmLabel="Excluir anotação"
           variant="danger"
+          [loading]="isDeleting()"
           (confirmed)="confirmDelete()"
           (cancelled)="cancelDelete()"
         />
@@ -224,6 +226,7 @@ export class NotesPageComponent implements OnInit {
   readonly isFormModalOpen = signal(false);
   readonly editingNote = signal<NoteResponseDTO | null>(null);
   readonly deletingNote = signal<NoteResponseDTO | null>(null);
+  readonly isDeleting = signal(false);
 
   ngOnInit(): void {
     this.searchSubject
@@ -285,7 +288,9 @@ export class NotesPageComponent implements OnInit {
   }
 
   cancelDelete(): void {
-    this.deletingNote.set(null);
+    if (!this.isDeleting()) {
+      this.deletingNote.set(null);
+    }
   }
 
   confirmDelete(): void {
@@ -294,16 +299,20 @@ export class NotesPageComponent implements OnInit {
       return;
     }
 
-    this.noteService.delete(target.id).subscribe({
-      next: () => {
-        this.notes.update((list) => list.filter((n) => n.id !== target.id));
-        this.deletingNote.set(null);
-        this.toastService.success('Anotação excluída com sucesso.');
-      },
-      error: () => {
-        this.deletingNote.set(null);
-        this.toastService.error('Não foi possível excluir a anotação.');
-      },
-    });
+    this.isDeleting.set(true);
+    this.noteService
+      .delete(target.id)
+      .pipe(finalize(() => this.isDeleting.set(false)))
+      .subscribe({
+        next: () => {
+          this.notes.update((list) => list.filter((n) => n.id !== target.id));
+          this.deletingNote.set(null);
+          this.toastService.success('Anotação excluída com sucesso.');
+        },
+        error: () => {
+          this.deletingNote.set(null);
+          this.toastService.error('Não foi possível excluir a anotação.');
+        },
+      });
   }
 }

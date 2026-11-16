@@ -422,6 +422,7 @@ export class CategoriesPageComponent implements OnInit {
 
     req$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
       next: () => {
+        this.isSubmitting.set(false);
         this.toastService.success(
           editing ? 'Categoria renomeada com sucesso.' : 'Categoria criada com sucesso.'
         );
@@ -459,6 +460,7 @@ export class CategoriesPageComponent implements OnInit {
       .pipe(finalize(() => this.isDeleting.set(false)))
       .subscribe({
         next: () => {
+          this.isDeleting.set(false);
           this.toastService.success(
             `A categoria "${cat.name}" foi excluída ou inativada conforme seus vínculos.`
           );

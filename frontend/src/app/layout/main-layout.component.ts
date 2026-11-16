@@ -198,7 +198,7 @@ interface NavItem {
             </p>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-5">
             <app-notification-bell />
             <app-theme-toggle />
           </div>

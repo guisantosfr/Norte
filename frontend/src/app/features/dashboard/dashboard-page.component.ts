@@ -147,13 +147,13 @@ const MONTH_NAMES_PT = [
                 type="button"
                 (click)="navigatePeriod(-1)"
                 aria-label="Período anterior"
-                class="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-text-secondary hover:text-text transition-colors cursor-pointer"
+                class="rounded-xl border border-border bg-background px-3 py-1.5 text-sm font-bold text-text-secondary hover:text-text transition-colors cursor-pointer"
               >
                 ←
               </button>
 
               <div
-                class="min-w-[175px] rounded-xl border border-border bg-background px-4 py-1.5 text-center text-xs font-bold text-text"
+                class="min-w-[175px] rounded-xl border border-border bg-background px-4 py-1.5 text-center text-sm font-bold text-text"
               >
                 {{ periodLabel() }}
               </div>
@@ -162,7 +162,7 @@ const MONTH_NAMES_PT = [
                 type="button"
                 (click)="navigatePeriod(1)"
                 aria-label="Próximo período"
-                class="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-text-secondary hover:text-text transition-colors cursor-pointer"
+                class="rounded-xl border border-border bg-background px-3 py-1.5 text-sm font-bold text-text-secondary hover:text-text transition-colors cursor-pointer"
               >
                 →
               </button>
@@ -171,7 +171,7 @@ const MONTH_NAMES_PT = [
                 <button
                   type="button"
                   (click)="resetToToday()"
-                  class="rounded-xl bg-support/15 px-3 py-1.5 text-xs font-semibold text-support hover:bg-support hover:text-white transition-colors cursor-pointer"
+                  class="rounded-xl bg-support/15 px-3 py-1.5 text-sm font-semibold text-support hover:bg-support hover:text-white transition-colors cursor-pointer"
                 >
                   Hoje
                 </button>

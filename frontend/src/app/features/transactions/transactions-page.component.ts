@@ -122,7 +122,6 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
             <select
               id="filter-type"
               [(ngModel)]="filterType"
-              (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todos</option>
@@ -139,7 +138,6 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
             <select
               id="filter-status"
               [(ngModel)]="filterStatus"
-              (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todos</option>
@@ -157,7 +155,6 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
             <select
               id="filter-category"
               [(ngModel)]="filterCategoryId"
-              (ngModelChange)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todas</option>
@@ -178,7 +175,6 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               id="filter-start-date"
               type="date"
               [(ngModel)]="filterStartDate"
-              (change)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             />
           </div>
@@ -192,7 +188,6 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
               id="filter-end-date"
               type="date"
               [(ngModel)]="filterEndDate"
-              (change)="applyFilters()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             />
           </div>
@@ -892,6 +887,7 @@ export class TransactionsPageComponent implements OnInit {
         .pipe(finalize(() => this.isExecutingConfirmAction.set(false)))
         .subscribe({
           next: () => {
+            this.isExecutingConfirmAction.set(false);
             this.toastService.info('Transação marcada como cancelada.');
             this.closeConfirmDialog();
             this.loadTransactions();
@@ -909,6 +905,7 @@ export class TransactionsPageComponent implements OnInit {
       .pipe(finalize(() => this.isExecutingConfirmAction.set(false)))
       .subscribe({
         next: () => {
+          this.isExecutingConfirmAction.set(false);
           this.toastService.success('Transação excluída com sucesso.');
           this.closeConfirmDialog();
           this.loadTransactions();

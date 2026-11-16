@@ -121,7 +121,6 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
             <select
               id="rec-filter-active"
               [(ngModel)]="filterActive"
-              (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todas</option>
@@ -138,7 +137,6 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
             <select
               id="rec-filter-type"
               [(ngModel)]="filterType"
-              (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todas</option>
@@ -155,7 +153,6 @@ import { RecurrenceOccurrencesModalComponent } from './components/recurrence-occ
             <select
               id="rec-filter-category"
               [(ngModel)]="filterCategoryId"
-              (ngModelChange)="loadRecurrences()"
               class="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-support"
             >
               <option value="">Todas</option>
