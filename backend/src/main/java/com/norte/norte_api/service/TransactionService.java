@@ -127,7 +127,7 @@ public class TransactionService {
             return cb.and(predicates.toArray(Predicate[]::new));
         };
 
-        Sort sort = Sort.by(Sort.Order.desc("date"), Sort.Order.desc("createdAt"));
+        Sort sort = Sort.by(Sort.Order.asc("date"), Sort.Order.asc("createdAt"));
 
         return transactionRepository.findAll(spec, sort)
                 .stream()

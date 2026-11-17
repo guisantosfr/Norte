@@ -338,7 +338,7 @@ import { TransactionFormModalComponent } from './components/transaction-form-mod
                             {{
                               tx.totalOccurrences
                                 ? 'Parcela ' + tx.occurrenceNumber + '/' + tx.totalOccurrences
-                                : 'Recorrente #' + tx.occurrenceNumber
+                                : 'Recorrência #' + tx.occurrenceNumber
                             }}
                           </span>
                         }

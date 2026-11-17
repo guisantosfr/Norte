@@ -7,19 +7,17 @@
 
 ## 📸 Demonstração Visual (Screenshots)
 
-> *Espaço reservado para capturas de tela da aplicação em funcionamento (Temas Claro e Escuro).*
-
-| Visão Geral (Dashboard — Tema Claro) | Visão Geral (Dashboard — Tema Escuro) |
-| :---: | :---: |
-| ![Dashboard Tema Claro](docs/screenshots/dashboard-light.png) | ![Dashboard Tema Escuro](docs/screenshots/dashboard-dark.png) |
+| Dashboard |
+| :---: |
+| ![Dashboard](frontend/public/dashboard.png) |
 
 | Transações e Filtros | Recorrências e Parcelamentos |
 | :---: | :---: |
-| ![Transações](docs/screenshots/transactions.png) | ![Recorrências e Parcelamentos](docs/screenshots/recurrences.png) |
+| ![Transações](frontend/public/transacoes.png) | ![Recorrências e Parcelamentos](frontend/public/recorrencias.png) |
 
-| Indicadores e Análise por Categoria | Central de Lembretes e Anotações |
+| Lembretes | Anotações |
 | :---: | :---: |
-| ![Indicadores Financeiros](docs/screenshots/financial-overview.png) | ![Lembretes e Anotações](docs/screenshots/notifications-notes.png) |
+| ![Lembretes](frontend/public/lembretes.png) | ![Anotações](frontend/public/anotacoes.png) |
 
 ---
 
