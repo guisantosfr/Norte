@@ -11,12 +11,13 @@ import {
   TypedTransactionRequestDTO,
 } from '../../../core/models/transaction.model';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { CurrencyMaskDirective } from '../../../shared/directives/currency-mask.directive';
 import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-transaction-form-modal',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CurrencyMaskDirective],
   template: `
     @if (open()) {
       <div
@@ -130,11 +131,11 @@ import { ToastService } from '../../../shared/services/toast.service';
                 </label>
                 <input
                   id="tx-amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+                  type="text"
+                  inputmode="numeric"
+                  appCurrencyMask
                   formControlName="amount"
-                  placeholder="0,00"
+                  placeholder="R$ 0,00"
                   class="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
                   [class.border-expense]="hasFieldError('amount')"
                   [class.border-border]="!hasFieldError('amount')"
@@ -243,9 +244,9 @@ import { ToastService } from '../../../shared/services/toast.service';
                 </label>
                 <input
                   id="tx-realized-amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+                  type="text"
+                  inputmode="numeric"
+                  appCurrencyMask
                   formControlName="realizedAmount"
                   placeholder="Deixe em branco para usar o valor previsto"
                   class="w-full rounded-xl border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"

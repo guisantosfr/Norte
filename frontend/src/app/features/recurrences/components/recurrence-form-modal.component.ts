@@ -12,6 +12,7 @@ import {
 } from '../../../core/models/recurring-transaction.model';
 import { TransactionType } from '../../../core/models/transaction.model';
 import { RecurringTransactionService } from '../../../core/services/recurring-transaction.service';
+import { CurrencyMaskDirective } from '../../../shared/directives/currency-mask.directive';
 import { ToastService } from '../../../shared/services/toast.service';
 
 export type RecurrenceMode = 'FIXED' | 'INSTALLMENT';
@@ -19,7 +20,7 @@ export type RecurrenceMode = 'FIXED' | 'INSTALLMENT';
 @Component({
   selector: 'app-recurrence-form-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, CurrencyMaskDirective],
   template: `
     @if (open()) {
       <div
@@ -188,11 +189,11 @@ export type RecurrenceMode = 'FIXED' | 'INSTALLMENT';
                 </label>
                 <input
                   id="rec-amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+                  type="text"
+                  inputmode="numeric"
+                  appCurrencyMask
                   formControlName="amount"
-                  placeholder="0,00"
+                  placeholder="R$ 0,00"
                   class="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-support transition-colors"
                   [class.border-expense]="hasFieldError('amount')"
                   [class.border-border]="!hasFieldError('amount')"

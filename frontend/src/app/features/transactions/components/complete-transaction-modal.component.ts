@@ -5,12 +5,13 @@ import { finalize } from 'rxjs';
 import { parseHttpError } from '../../../core/http/api-error.model';
 import { TransactionResponseDTO } from '../../../core/models/transaction.model';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { CurrencyMaskDirective } from '../../../shared/directives/currency-mask.directive';
 import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-complete-transaction-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, CurrencyMaskDirective],
   template: `
     @if (open() && transaction(); as tx) {
       <div
@@ -71,10 +72,11 @@ import { ToastService } from '../../../shared/services/toast.service';
               </label>
               <input
                 id="complete-realized-amount"
-                type="number"
-                step="0.01"
-                min="0.01"
+                type="text"
+                inputmode="numeric"
+                appCurrencyMask
                 formControlName="realizedAmount"
+                placeholder="R$ 0,00"
                 class="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-support transition-colors"
               />
               <p class="mt-1 text-[11px] text-text-muted">
